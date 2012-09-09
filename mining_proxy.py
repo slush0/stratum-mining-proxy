@@ -50,7 +50,7 @@ class ClientMiningService(GenericEventHandler):
     
     def handle_event(self, method, params, connection_ref):
         '''Handle RPC calls and notifications from the pool'''
-        
+
         if method == 'mining.notify':
             '''Proxy just received information about new mining job'''
             
@@ -79,8 +79,14 @@ class ClientMiningService(GenericEventHandler):
             log.info("Setting new difficulty: %s" % difficulty)
             self.job_registry.set_difficulty(difficulty)
             
+        elif method == 'client.reconnect':
+            
+            (hostname, port) = params[:2]
+            log.info("Server asked us to reconnect to %s:%d" % (hostname, port))
+            self.job_registry.f.reconnect(hostname, port)
+            
         else:
-            '''Something is going wrong...'''
+            '''Pool just asked us for something which we don't support...'''
             log.error("Unhandled method %s with params %s" % (method, params))
 
 def uint256_from_str(s):
@@ -128,10 +134,14 @@ def on_connect(f, workers, job_registry):
     
     defer.returnValue(f)
      
-def on_disconnect(f):
+def on_disconnect(f, workers, job_registry):
     '''Callback when proxy get disconnected from the pool'''
     log.info("Disconnected from Stratum pool at %s:%d" % f.main_host)
-    f.on_disconnect.addCallback(on_disconnect)
+
+    # Reject miners because we don't give a *job :-)
+    workers.clear_authorizations() 
+        
+    f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
     return f
 
 class Job(object):
@@ -499,7 +509,7 @@ class Root(Resource):
         
     def render_POST(self, request):
         request.setHeader('content-type', 'application/json')
-        request.setHeader('x-stratum', 'http://%s:%d' % (self.stratum_host, self.stratum_port))
+        request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
         request.setHeader('x-long-polling', '/lp')
         request.setHeader('x-roll-ntime', 1)
         
@@ -554,7 +564,7 @@ def main(args):
     
     workers = WorkerRegistry(f)
     f.on_connect.addCallback(on_connect, workers, job_registry)
-    f.on_disconnect.addCallback(on_disconnect)
+    f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
     
     # Cleanup properly on shutdown
     reactor.addSystemEventTrigger('before', 'shutdown', on_shutdown, f)
