@@ -73,18 +73,29 @@ class ClientMiningService(GenericEventHandler):
             self.job_registry.add_template(job, clean_jobs)
             
         elif method == 'mining.set_difficulty':
-            
             difficulty = params[0]
-            
             log.info("Setting new difficulty: %s" % difficulty)
             self.job_registry.set_difficulty(difficulty)
-            
+                    
         elif method == 'client.reconnect':
-            
             (hostname, port) = params[:2]
             log.info("Server asked us to reconnect to %s:%d" % (hostname, port))
             self.job_registry.f.reconnect(hostname, port)
             
+        elif method == 'client.add_peers':
+            '''New peers which can be used on connection failure'''
+            peerlist = params[0] # TODO
+            return False
+        
+        elif method == 'client.get_version':
+            return "stratum-proxy/0.2"
+
+        elif method == 'mining.get_hashrate':
+            return {} # TODO
+        
+        elif method == 'mining.get_temperature':
+            return {} # TODO
+        
         else:
             '''Pool just asked us for something which we don't support...'''
             log.error("Unhandled method %s with params %s" % (method, params))
