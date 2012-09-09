@@ -1,7 +1,7 @@
 stratum-mining-proxy
 ====================
 
-Application providing bridge between old HTTP/getwork protocol and Stratum mining protocol.
+Application providing bridge between old HTTP/getwork protocol and Stratum-powered bitcoin mining protocol.
 
 Installation on Windows
 -----------------------
@@ -34,3 +34,9 @@ but don't install the package into the system.
 proxy connects to Slush's pool interface.
 5. If you want to connect to another pool or change other proxy settings, type "./mining_proxy.py --help".
 6. If you want to update the proxy, type "git pull" in the package directory.
+
+Contact
+-------
+
+This proxy is provided by Slush's mining pool at http://mining.bitcoin.cz. You can contact the author
+by email info(at)bitcoin.cz or by IRC #stratum on irc.freenode.net.
