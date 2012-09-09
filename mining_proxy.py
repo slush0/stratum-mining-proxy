@@ -574,7 +574,12 @@ def main(args):
         
     reactor.listenTCP(args.getwork_port, Site(Root(job_registry, workers, stratum_host=args.host, stratum_port=args.port)),
                       interface=args.getwork_host)
-
+    log.info("------------------------------------------------")
+    if args.getwork_host == '0.0.0.0':
+        log.info("PROXY IS LISTENING ON ALL IPs ON PORT %d" % args.getwork_port)
+    else:
+        log.info("LISTENING FOR MINERS ON http://%s:%s" % (args.getwork_host, args.getwork_port))
+    log.info("------------------------------------------------")
     # And now just sit down and wait for miners and new mining jobs
 
 def parse_args():
