@@ -25,11 +25,13 @@ import weakref
 import hashlib
 import struct
 import binascii
+import urlparse
 
 from twisted.internet import reactor
 from twisted.internet import defer
 from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
+from twisted.web import client
 
 from stratum.socket_transport import SocketTransportClientFactory
 from stratum.services import GenericService, ServiceEventHandler
@@ -558,13 +560,69 @@ class Root(Resource):
             "from modern Stratum-based bitcoin mining pools."
 
 @defer.inlineCallbacks
-def main(args):
-    log.info("Trying to connect to Stratum pool at %s:%d" % (args.host, args.port))    
+def detect_stratum(host, port):
+    '''Perform getwork request to given
+    host/port. If server respond, it will
+    try to parse X-Stratum header.
+    Not the most elegant code, but it works,
+    because Stratum server should close the connection
+    when client uses unknown payload.'''
     
-    #if args.verbose:
-    #    settings.LOGLEVEL = 'DEBUG'
-    #else:
-    #    settings.LOGLEVEL = 'INFO'
+    def get_raw_page(url, *args, **kwargs):
+        scheme, host, port, path = client._parse(url)
+        factory = client.HTTPClientFactory(url, *args, **kwargs)
+        reactor.connectTCP(host, port, factory)
+        return factory
+
+    def _on_callback(_, d):d.callback(True)
+    def _on_errback(_, d): d.callback(True)
+    f =get_raw_page('http://%s:%d' % (host, port))
+    
+    d = defer.Deferred()
+    f.deferred.addCallback(_on_callback, d)
+    f.deferred.addErrback(_on_errback, d)
+    (yield d)
+    
+    if not f.response_headers:
+        # Most likely we're already connecting to Stratum
+        defer.returnValue((host, port))
+    
+    header = f.response_headers.get('x-stratum', None)[0]
+    if not header:
+        # Looks like pool doesn't support stratum
+        defer.returnValue(None) 
+    
+    if 'stratum+tcp://' not in header:
+        # Invalid header or unsupported transport
+        defer.returnValue(None)
+    
+    netloc = urlparse.urlparse(header).netloc.split(':')
+    if len(netloc) == 1:
+        # Port is not specified
+        defer.returnValue((netloc, 3333))
+    elif len(netloc) == 2:
+        defer.returnValue((netloc[0], int(netloc[1])))
+    
+    defer.returnValue(None)
+    
+@defer.inlineCallbacks
+def main(args):
+    if args.port == 8332:
+        '''User most likely provided host/port
+        for getwork interface. Let's try to detect
+        Stratum host/port of given getwork pool.'''
+        
+        try:
+            new_host = (yield detect_stratum(args.host, args.port))
+        except:
+            log.info("Stratum host/port autodetection failed")
+            new_host = None
+            
+        if new_host != None:
+            args.host = new_host[0]
+            args.port = new_host[1]
+
+    log.info("Trying to connect to Stratum pool at %s:%d" % (args.host, args.port))        
         
     # Connect to Stratum pool
     f = SocketTransportClientFactory(args.host, args.port,
