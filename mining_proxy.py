@@ -399,13 +399,7 @@ class WorkerRegistry(object):
     
     def _on_failure(self, failure, worker_name):
         log.exception("Cannot authorize worker '%s'" % worker_name)
-    
-    def parse_basic_challenge(self, data):
-        if not data:
-            raise Exception("Basic challenge failed, no data")
-        
-        return base64.decodestring(data.split(' ')[1]).split(':')
-                    
+                        
     def authorize(self, worker_name, password):
         if worker_name in self.authorized:
             return True
@@ -510,7 +504,7 @@ class Root(Resource):
             return
         
         try:
-            (worker_name, _) = self.workers.parse_basic_challenge(request.getHeader('Authorization'))
+            worker_name = request.getUser()
         except:
             worker_name = '<unknown>'
             
@@ -518,14 +512,21 @@ class Root(Resource):
         request.write(self.json_response(0, self.job_registry.getwork()))
         request.finish()
         
-    def render_POST(self, request):
+    def render_POST(self, request):        
+        (worker_name, password) = (request.getUser(), request.getPassword())
+
+        if worker_name == '':
+            log.info("Authorization required")
+            request.setResponseCode(401)
+            request.setHeader('WWW-Authenticate', 'Basic realm="stratum-mining-proxy"')
+            return "Authorization required"
+         
         request.setHeader('content-type', 'application/json')
         request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
         request.setHeader('x-long-polling', '/lp')
         request.setHeader('x-roll-ntime', 1)
-        
-        (worker_name, password) = self.workers.parse_basic_challenge(request.getHeader('Authorization'))
-        
+
+
         if request.path == '/lp':
             log.info("Worker '%s' subscribed for LP" % worker_name)
             self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
@@ -544,7 +545,7 @@ class Root(Resource):
             request.setHeader('x-roll-ntime', 1)
             
             try:
-                (worker_name, _) = self.workers.parse_basic_challenge(request.getHeader('Authorization'))
+                worker_name = request.getUser()
             except:
                 worker_name = '<unknown>'
                 
