@@ -129,7 +129,7 @@ def on_connect(f, workers, job_registry):
     
     # Subscribe for receiving jobs
     log.info("Subscribing for mining jobs")
-    (_, _, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))
+    (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))
     job_registry.set_extranonce(extranonce1, extranonce2_size)
     
     defer.returnValue(f)
