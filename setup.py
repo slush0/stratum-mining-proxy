@@ -32,6 +32,7 @@ if py2exe != None:
                       },
                   },
         'console': ['mining_proxy.py'],
+        'zipfile': None,
     })
 
 setup(**args)
