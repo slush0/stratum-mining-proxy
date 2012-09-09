@@ -12,7 +12,7 @@ except ImportError:
 
 args = {
     'name': 'stratum_mining_proxy',
-    'version': '0.1.1',
+    'version': '0.2.0',
     'description': 'Getwork-compatible proxy for Stratum mining pools',
     'author': 'slush',
     'author_email': 'info@bitcion.cz',
