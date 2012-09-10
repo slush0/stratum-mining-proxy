@@ -1,7 +1,8 @@
 stratum-mining-proxy
 ====================
 
-Application providing bridge between old HTTP/getwork protocol and Stratum-powered bitcoin mining protocol.
+Application providing bridge between old HTTP/getwork protocol and Stratum mining protocol
+as described here: http://mining.bitcoin.cz/stratum-mining.
 
 Installation on Windows
 -----------------------
