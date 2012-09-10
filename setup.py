@@ -29,6 +29,7 @@ if py2exe != None:
                       {'optimize': 2,
                        'bundle_files': 1,
                        'compressed': True,
+                       'dll_excludes': ['mswsock.dll', 'powrprof.dll'],
                       },
                   },
         'console': ['mining_proxy.py'],
