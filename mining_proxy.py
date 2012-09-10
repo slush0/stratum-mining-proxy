@@ -90,8 +90,14 @@ class ClientMiningService(GenericEventHandler):
             return False
         
         elif method == 'client.get_version':
-            return "stratum-proxy/0.2"
+            return "stratum-proxy/0.3"
 
+        elif method == 'client.show_message':
+            
+            # Displays message from the server to the terminal
+            show_message(params[0])
+            return True
+            
         elif method == 'mining.get_hashrate':
             return {} # TODO
         
@@ -102,6 +108,13 @@ class ClientMiningService(GenericEventHandler):
             '''Pool just asked us for something which we don't support...'''
             log.error("Unhandled method %s with params %s" % (method, params))
 
+def show_message(msg):
+    '''Repeatedly displays the message received from
+    the server.'''
+    log.warning("MESSAGE FROM THE SERVER OPERATOR: %s" % msg)
+    log.warning("Restart proxy to discard the message")
+    reactor.callLater(10, show_message, msg)
+    
 def uint256_from_str(s):
     r = 0L
     t = struct.unpack("<IIIIIIII", s[:32])
@@ -345,7 +358,7 @@ class JobRegistry(object):
             result['midstate'] = binascii.hexlify(calculateMidstate(header_bin))
 
         return result            
-
+        
     def submit(self, header, worker_name):
         # Drop unused padding
         header = header[:160]
@@ -606,7 +619,7 @@ def detect_stratum(host, port):
     
 @defer.inlineCallbacks
 def main(args):
-    if args.port == 8332:
+    if args.port != 3333:
         '''User most likely provided host/port
         for getwork interface. Let's try to detect
         Stratum host/port of given getwork pool.'''
