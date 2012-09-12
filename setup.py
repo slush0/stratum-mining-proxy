@@ -18,7 +18,7 @@ args = {
     'author_email': 'info@bitcion.cz',
     'url': 'http://mining.bitcoin.cz/stratum-mining/',
     'py_modules': ['midstate',],
-    'install_requires': ['twisted', 'stratum',],
+    'install_requires': ['twisted', 'stratum', 'argparse'],
     'scripts': ['mining_proxy.py'],
 }
 
