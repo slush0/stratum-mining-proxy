@@ -94,7 +94,7 @@ class ClientMiningService(GenericEventHandler):
             return False
         
         elif method == 'client.get_version':
-            return "stratum-proxy/0.4"
+            return "stratum-proxy/0.5"
 
         elif method == 'client.show_message':
             
