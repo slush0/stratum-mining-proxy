@@ -34,10 +34,13 @@ from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
 from twisted.web import client
 
+from stratum import settings
+settings.LOGLEVEL='INFO'
+
 from stratum.socket_transport import SocketTransportClientFactory
 from stratum.services import GenericService, ServiceEventHandler
 from stratum.event_handler import GenericEventHandler
-from stratum import settings
+
 
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
