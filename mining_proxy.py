@@ -26,6 +26,7 @@ import hashlib
 import struct
 import binascii
 import urlparse
+import subprocess
 
 from twisted.internet import reactor
 from twisted.internet import defer
@@ -90,7 +91,7 @@ class ClientMiningService(GenericEventHandler):
             return False
         
         elif method == 'client.get_version':
-            return "stratum-proxy/0.3"
+            return "stratum-proxy/0.4"
 
         elif method == 'client.show_message':
             
@@ -114,7 +115,7 @@ def show_message(msg):
     log.warning("MESSAGE FROM THE SERVER OPERATOR: %s" % msg)
     log.warning("Restart proxy to discard the message")
     reactor.callLater(10, show_message, msg)
-    
+       
 def uint256_from_str(s):
     r = 0L
     t = struct.unpack("<IIIIIIII", s[:32])
@@ -130,10 +131,8 @@ def uint256_to_str(u):
     return rs  
 
 def reverse_hash(h):
-    if len(h) != 64:
-        raise Exception('hash must have 64 hexa chars')    
-    return ''.join([ h[56-i:64-i] for i in range(0, 64, 8) ])
-        
+    return struct.pack('>IIIIIIII', *struct.unpack('>IIIIIIII', h)[::-1])[::-1]
+     
 def doublesha(b):
     return hashlib.sha256(hashlib.sha256(b).digest()).digest()
 
@@ -222,8 +221,9 @@ class Job(object):
         return r            
         
 class JobRegistry(object):   
-    def __init__(self, f):
+    def __init__(self, f, cmd):
         self.f = f
+        self.cmd = cmd # execute this command on new block
         self.jobs = []        
         self.last_job = None
         self.extranonce1 = None
@@ -239,6 +239,9 @@ class JobRegistry(object):
         
         # Hook for LP broadcasts
         self.on_block = defer.Deferred()
+
+    def execute_cmd(self, prevhash):
+        return subprocess.Popen(self.cmd.replace('%s', prevhash), shell=True)
 
     def set_extranonce(self, extranonce1, extranonce2_size):
         self.extranonce2_size = extranonce2_size
@@ -288,6 +291,9 @@ class JobRegistry(object):
             on_block = self.on_block
             self.on_block = defer.Deferred()
             on_block.callback(True)
+    
+            # blocknotify-compatible call
+            self.execute_cmd(template.prevhash)
           
     def register_merkle(self, job, merkle_hash, extranonce2):
         # merkle_to_job is weak-ref, so it is cleaned up automatically
@@ -334,8 +340,8 @@ class JobRegistry(object):
         coinbase_hash = doublesha(coinbase_bin)
         
         # 5. Calculate merkle root
-        merkle_root = reverse_hash("%064x" % uint256_from_str(job.build_merkle_root(coinbase_hash)))
-        
+        merkle_root = binascii.hexlify(reverse_hash2(job.build_merkle_root(coinbase_hash)))
+                
         # 6. Generate current ntime
         ntime = int(time.time()) + job.ntime_delta
         
@@ -635,13 +641,13 @@ def main(args):
             args.port = new_host[1]
 
     log.info("Trying to connect to Stratum pool at %s:%d" % (args.host, args.port))        
-        
+            
     # Connect to Stratum pool
     f = SocketTransportClientFactory(args.host, args.port,
                 debug=args.verbose,
                 event_handler=ClientMiningService)
     
-    job_registry = JobRegistry(f)
+    job_registry = JobRegistry(f, cmd=args.blocknotify_cmd)
     ClientMiningService.job_registry = job_registry
     
     workers = WorkerRegistry(f)
@@ -656,13 +662,13 @@ def main(args):
         
     reactor.listenTCP(args.getwork_port, Site(Root(job_registry, workers, stratum_host=args.host, stratum_port=args.port)),
                       interface=args.getwork_host)
+    
     log.info("------------------------------------------------")
     if args.getwork_host == '0.0.0.0':
         log.info("PROXY IS LISTENING ON ALL IPs ON PORT %d" % args.getwork_port)
     else:
         log.info("LISTENING FOR MINERS ON http://%s:%s" % (args.getwork_host, args.getwork_port))
     log.info("------------------------------------------------")
-    # And now just sit down and wait for miners and new mining jobs
 
 def parse_args():
     parser = argparse.ArgumentParser(description='This proxy allows you to run getwork-based miners against Stratum mining pool.')
@@ -670,7 +676,7 @@ def parse_args():
     parser.add_argument('-p', '--port', dest='port', type=int, default=3333, help='Port of Stratum mining pool')
     parser.add_argument('-oh', '--getwork-host', dest='getwork_host', type=str, default='0.0.0.0', help='On which network interface listen for getwork miners. Use "localhost" for listening on internal IP only.')
     parser.add_argument('-gp', '--getwork-port', dest='getwork_port', type=int, default=8332, help='Port on which port listen for getwork miners. Use another port if you have bitcoind RPC running on this machine already.')
-    parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%s in cmd is replaced by block hash)')
+    parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     return parser.parse_args()
 
