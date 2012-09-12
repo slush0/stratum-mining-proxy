@@ -221,9 +221,10 @@ class Job(object):
         return r            
         
 class JobRegistry(object):   
-    def __init__(self, f, cmd):
+    def __init__(self, f, cmd, no_midstate):
         self.f = f
         self.cmd = cmd # execute this command on new block
+        self.no_midstate = no_midstate # Indicates if calculate midstate for getwork
         self.jobs = []        
         self.last_job = None
         self.extranonce1 = None
@@ -340,7 +341,7 @@ class JobRegistry(object):
         coinbase_hash = doublesha(coinbase_bin)
         
         # 5. Calculate merkle root
-        merkle_root = binascii.hexlify(reverse_hash2(job.build_merkle_root(coinbase_hash)))
+        merkle_root = binascii.hexlify(reverse_hash(job.build_merkle_root(coinbase_hash)))
                 
         # 6. Generate current ntime
         ntime = int(time.time()) + job.ntime_delta
@@ -359,7 +360,7 @@ class JobRegistry(object):
                 'hash1': hash1,
                 'target': self.target_hex}
     
-        if calculateMidstate:
+        if not self.no_midstate and calculateMidstate:
             # Midstate module not found or disabled
             result['midstate'] = binascii.hexlify(calculateMidstate(header_bin))
 
@@ -371,9 +372,9 @@ class JobRegistry(object):
 
         # 1. Check if blockheader meets requested difficulty
         header_bin = binascii.unhexlify(header[:160])
-        rev = ''.join([ header_bin[i*4:i*4+4][::-1] for i in range(0, 20) ])
+        rev = reverse_hash(header_bin)
         hash_bin = doublesha(rev)
-        block_hash = ''.join([ hash_bin[i*4:i*4+4][::-1] for i in range(0, 8) ])
+        block_hash = reverse_hash(hash_bin)
         
         #log.info('!!! %s' % header[:160])
         log.info("Submitting %s" % binascii.hexlify(block_hash))
@@ -647,7 +648,7 @@ def main(args):
                 debug=args.verbose,
                 event_handler=ClientMiningService)
     
-    job_registry = JobRegistry(f, cmd=args.blocknotify_cmd)
+    job_registry = JobRegistry(f, cmd=args.blocknotify_cmd, no_midstate=args.no_midstate)
     ClientMiningService.job_registry = job_registry
     
     workers = WorkerRegistry(f)
@@ -676,6 +677,7 @@ def parse_args():
     parser.add_argument('-p', '--port', dest='port', type=int, default=3333, help='Port of Stratum mining pool')
     parser.add_argument('-oh', '--getwork-host', dest='getwork_host', type=str, default='0.0.0.0', help='On which network interface listen for getwork miners. Use "localhost" for listening on internal IP only.')
     parser.add_argument('-gp', '--getwork-port', dest='getwork_port', type=int, default=8332, help='Port on which port listen for getwork miners. Use another port if you have bitcoind RPC running on this machine already.')
+    parser.add_argument('-nm', '--no_midstate', dest='no_midstate', action='store_true', help="Don't compute midstate for getwork. This has outstanding performance boost, but some old miners like Diablo don't work without midstate. ")
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     return parser.parse_args()
