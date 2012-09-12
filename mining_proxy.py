@@ -375,9 +375,9 @@ class JobRegistry(object):
 
         # 1. Check if blockheader meets requested difficulty
         header_bin = binascii.unhexlify(header[:160])
-        rev = reverse_hash(header_bin)
+        rev = ''.join([ header_bin[i*4:i*4+4][::-1] for i in range(0, 20) ])
         hash_bin = doublesha(rev)
-        block_hash = reverse_hash(hash_bin)
+        block_hash = ''.join([ hash_bin[i*4:i*4+4][::-1] for i in range(0, 8) ])
         
         #log.info('!!! %s' % header[:160])
         log.info("Submitting %s" % binascii.hexlify(block_hash))
