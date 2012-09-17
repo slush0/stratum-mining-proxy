@@ -28,8 +28,8 @@ import binascii
 import urlparse
 import subprocess
 
-from twisted.internet import reactor
-from twisted.internet import defer
+from twisted.internet import reactor, defer
+from twisted.internet.protocol import DatagramProtocol
 from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
 from twisted.web import client
@@ -581,6 +581,43 @@ class Root(Resource):
         return "This is Stratum mining proxy. It is used for providing work to getwork-compatible miners "\
             "from modern Stratum-based bitcoin mining pools."
 
+class MulticastResponder(DatagramProtocol):
+    def __init__(self, pool_host, stratum_port, getwork_port):
+        # Upstream Stratum host/port
+        # Used for identifying the pool which we're connected to.
+        # Some load balancing strategies can change the host/port
+        # during the mining session (by mining.reconnect()), but this points
+        # to initial host/port provided by user on cmdline or by X-Stratum 
+        self.pool_host = pool_host
+        
+        self.stratum_port = stratum_port
+        self.getwork_port = getwork_port
+        
+    def startProtocol(self):        
+        # 239.0.0.0/8 are for private use within an organization
+        self.transport.joinGroup("239.3.3.3")
+        self.transport.setTTL(5)
+
+    def writeResponse(self, address, msg_id, result, error=None):
+        self.transport.write(json.dumps({"id": msg_id, "result": result, "error": error}), address)
+        
+    def datagramReceived(self, datagram, address):
+        log.info("Received local discovery request from %s:%d" % address)
+        
+        try:
+            data = json.loads(datagram)
+        except:
+            # Skip response if datagram is not parsable
+            log.error("Unparsable datagram")
+            return
+        
+        msg_id = data.get('id')
+        msg_method = data.get('method')
+        #msg_params = data.get('params')
+        
+        if msg_method == 'mining.get_upstream':
+            self.writeResponse(address, msg_id, (self.pool_host, self.stratum_port, self.getwork_port))
+
 @defer.inlineCallbacks
 def detect_stratum(host, port):
     '''Perform getwork request to given
@@ -667,6 +704,9 @@ def main(args):
     reactor.listenTCP(args.getwork_port, Site(Root(job_registry, workers, stratum_host=args.host, stratum_port=args.port)),
                       interface=args.getwork_host)
     
+    # Setup multicast responder
+    reactor.listenMulticast(3334, MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
+        
     log.info("------------------------------------------------")
     if args.getwork_host == '0.0.0.0':
         log.info("PROXY IS LISTENING ON ALL IPs ON PORT %d" % args.getwork_port)
@@ -678,6 +718,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='This proxy allows you to run getwork-based miners against Stratum mining pool.')
     parser.add_argument('-o', '--host', dest='host', type=str, default='api-stratum.bitcoin.cz', help='Hostname of Stratum mining pool')
     parser.add_argument('-p', '--port', dest='port', type=int, default=3333, help='Port of Stratum mining pool')
+    parser.add_argument('-sh', '--stratum-host', dest='stratum_host', type=str, default='0.0.0.0', help='On which network interface listen for stratum miners. Use "localhost" for listening on internal IP only.')
+    parser.add_argument('-sp', '--stratum-port', dest='stratum_port', type=int, default=3333, help='Port on which port listen for stratum miners.')
     parser.add_argument('-oh', '--getwork-host', dest='getwork_host', type=str, default='0.0.0.0', help='On which network interface listen for getwork miners. Use "localhost" for listening on internal IP only.')
     parser.add_argument('-gp', '--getwork-port', dest='getwork_port', type=int, default=8332, help='Port on which port listen for getwork miners. Use another port if you have bitcoind RPC running on this machine already.')
     parser.add_argument('-nm', '--no-midstate', dest='no_midstate', action='store_true', help="Don't compute midstate for getwork. This has outstanding performance boost, but some old miners like Diablo don't work without midstate. ")
