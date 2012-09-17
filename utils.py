@@ -14,7 +14,11 @@ def show_message(msg):
     log.warning("MESSAGE FROM THE SERVER OPERATOR: %s" % msg)
     log.warning("Restart proxy to discard the message")
     reactor.callLater(10, show_message, msg)
-       
+
+def format_hash(h):
+    # For printing hashes to console
+    return "%s" % h[:8]
+  
 def uint256_from_str(s):
     r = 0L
     t = struct.unpack("<IIIIIIII", s[:32])

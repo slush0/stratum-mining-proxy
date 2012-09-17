@@ -32,6 +32,7 @@ import client_service
 import jobs
 import worker_registry
 import multicast_responder
+import version
 
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
@@ -88,6 +89,7 @@ def main(args):
             args.host = new_host[0]
             args.port = new_host[1]
 
+    log.info("Stratum proxy version: %s" % version.VERSION)
     log.info("Trying to connect to Stratum pool at %s:%d" % (args.host, args.port))        
             
     # Connect to Stratum pool
@@ -118,13 +120,13 @@ def main(args):
 
     # Setup multicast responder
     reactor.listenMulticast(3333, multicast_responder.MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
-        
-    log.info("------------------------------------------------")
+    
+    log.info("-----------------------------------------------------------------------")
     if args.getwork_host == '0.0.0.0':
         log.info("PROXY IS LISTENING ON ALL IPs ON PORT %d (stratum) AND %d (getwork)" % (args.stratum_port, args.getwork_port))
     else:
         log.info("LISTENING FOR MINERS ON http://%s:%s" % (args.getwork_host, args.getwork_port))
-    log.info("------------------------------------------------")
+    log.info("-----------------------------------------------------------------------")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='This proxy allows you to run getwork-based miners against Stratum mining pool.')

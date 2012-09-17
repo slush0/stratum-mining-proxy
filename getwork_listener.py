@@ -1,4 +1,5 @@
 import json
+import time
 
 from twisted.internet import defer
 from twisted.web.resource import Resource
@@ -26,21 +27,25 @@ class Root(Resource):
         #print "ERROR", resp
         return resp         
     
-    def _on_submit(self, result, request, msg_id, worker_name):
+    def _on_submit(self, result, request, msg_id, worker_name, start_time):
+        response_time = (time.time() - start_time) * 1000
         if result == True:
-            log.info("Share from '%s' has been accepted by the pool" % worker_name)
+            log.info("[%dms] Share from '%s' accepted" % (response_time, worker_name))
         else:
-            log.info("Share from '%s' has been REJECTED by the pool" % worker_name)
+            log.info("[%dms] Share from '%s' REJECTED" % (response_time, worker_name))
             
         request.write(self.json_response(msg_id, result))
         request.finish()
         
-    def _on_submit_failure(self, failure, request, msg_id, worker_name):
+    def _on_submit_failure(self, failure, request, msg_id, worker_name, start_time):
+        response_time = (time.time() - start_time) * 1000
+        
         # Submit for some reason failed
         request.write(self.json_response(msg_id, False))
         request.finish()
 
-        log.info("Share from '%s' has been REJECTED by the pool: %s" % (worker_name, failure.getErrorMessage()))
+        log.info("[%dms] Share from '%s' REJECTED: %s" % \
+                 (response_time, worker_name, failure.getErrorMessage()))
         
     def _on_authorized(self, is_authorized, request, worker_name):
         data = json.loads(request.content.read())
@@ -69,8 +74,10 @@ class Root(Resource):
                 
                 # submit
                 d = defer.maybeDeferred(self.job_registry.submit, data['params'][0], worker_name)
-                d.addCallback(self._on_submit, request, data['id'], worker_name)
-                d.addErrback(self._on_submit_failure, request, data['id'], worker_name)
+
+                start_time = time.time()
+                d.addCallback(self._on_submit, request, data['id'], worker_name, start_time)
+                d.addErrback(self._on_submit_failure, request, data['id'], worker_name, start_time)
                 return
             
         request.write(self.json_error(data['id'], -1, "Unsupported method '%s'" % data['method']))

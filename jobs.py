@@ -133,7 +133,7 @@ class JobRegistry(object):
         self.jobs.append(template)
         self.last_job = template
         
-        log.info("New job for prevhash %s" % template.prevhash) #''.join([ template.prevhash[56-i:64-i] for i in range(0, 64, 8) ]))
+        log.info("New job for prevhash %s" % utils.format_hash(template.prevhash))
         
         if clean_jobs:
             # Force miners to reload jobs
@@ -211,7 +211,7 @@ class JobRegistry(object):
         block_hash = ''.join([ hash_bin[i*4:i*4+4][::-1] for i in range(0, 8) ])
         
         #log.info('!!! %s' % header[:160])
-        log.info("Submitting %s" % binascii.hexlify(block_hash))
+        log.info("Submitting %s" % utils.format_hash(binascii.hexlify(block_hash)))
         
         if utils.uint256_from_str(hash_bin) > self.target:
             log.error("Share is below expected target")
