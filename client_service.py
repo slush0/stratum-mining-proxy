@@ -1,6 +1,7 @@
 from stratum.event_handler import GenericEventHandler
 from jobs import Job
 import utils
+import version
 
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
@@ -48,7 +49,7 @@ class ClientMiningService(GenericEventHandler):
             return False
         
         elif method == 'client.get_version':
-            return "stratum-proxy/0.5"
+            return "stratum-proxy/%s" % version.VERSION
 
         elif method == 'client.show_message':
             
