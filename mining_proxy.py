@@ -705,7 +705,7 @@ def main(args):
                       interface=args.getwork_host)
     
     # Setup multicast responder
-    reactor.listenMulticast(3334, MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
+    reactor.listenMulticast(3333, MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
         
     log.info("------------------------------------------------")
     if args.getwork_host == '0.0.0.0':

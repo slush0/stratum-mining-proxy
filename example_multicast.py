@@ -29,9 +29,18 @@ class MulticastClient(DatagramProtocol):
 
     def startProtocol(self):
         self.transport.joinGroup("239.3.3.3")
-        self.transport.write(json.dumps({"id": 0, "method": "mining.get_upstream", "params": []}), ('239.3.3.3', 3334))
+        self.transport.write(json.dumps({"id": 0, "method": "mining.get_upstream", "params": []}), ('239.3.3.3', 3333))
 
     def datagramReceived(self, datagram, address):
+        '''Some data from peers received.
+
+           Example of valid datagram:
+              {"id": 0, "result": [["api-stratum.bitcoin.cz", 3333], 3333, 8332], "error": null}
+
+           First argument - (host, port) of upstream pool
+           Second argument - Stratum port where proxy is listening
+           Third parameter - Getwork port where proxy is listening
+        '''
         #print "Datagram %s received from %s" % (datagram, address)
 
         try:
@@ -63,6 +72,6 @@ def stop():
     reactor.stop()
 
 print "Listening for Stratum proxies on local network..."
-reactor.listenMulticast(3334, MulticastClient(), listenMultiple=True)
+reactor.listenMulticast(3333, MulticastClient(), listenMultiple=True)
 reactor.callLater(5, stop)
 reactor.run()
