@@ -114,7 +114,6 @@ class Root(Resource):
          
         request.setHeader('content-type', 'application/json')
         #request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
-        log.info('stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
         request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
         request.setHeader('x-long-polling', '/lp')
         request.setHeader('x-roll-ntime', 1)
