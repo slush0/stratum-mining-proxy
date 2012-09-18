@@ -33,6 +33,7 @@ import jobs
 import worker_registry
 import multicast_responder
 import version
+import utils
 
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
@@ -80,9 +81,9 @@ def main(args):
         Stratum host/port of given getwork pool.'''
         
         try:
-            new_host = (yield detect_stratum(args.host, args.port))
+            new_host = (yield utils.detect_stratum(args.host, args.port))
         except:
-            log.info("Stratum host/port autodetection failed")
+            log.exception("Stratum host/port autodetection failed")
             new_host = None
             
         if new_host != None:
