@@ -26,14 +26,14 @@ from stratum.socket_transport import SocketTransportFactory, SocketTransportClie
 from stratum.services import ServiceEventHandler
 from twisted.web.server import Site
 
-import stratum_listener
-import getwork_listener
-import client_service
-import jobs
-import worker_registry
-import multicast_responder
-import version
-import utils
+from mining_libs import stratum_listener
+from mining_libs import getwork_listener
+from mining_libs import client_service
+from mining_libs import jobs
+from mining_libs import worker_registry
+from mining_libs import multicast_responder
+from mining_libs import version
+from mining_libs import utils
 
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
