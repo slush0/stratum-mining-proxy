@@ -1,6 +1,5 @@
 import hashlib
 import struct
-import urlparse
 
 from twisted.internet import defer, reactor
 from twisted.web import client
@@ -47,7 +46,7 @@ def detect_stratum(host, port):
     Not the most elegant code, but it works,
     because Stratum server should close the connection
     when client uses unknown payload.'''
-    
+        
     def get_raw_page(url, *args, **kwargs):
         scheme, host, port, path = client._parse(url)
         factory = client.HTTPClientFactory(url, *args, **kwargs)
@@ -56,7 +55,7 @@ def detect_stratum(host, port):
 
     def _on_callback(_, d):d.callback(True)
     def _on_errback(_, d): d.callback(True)
-    f =get_raw_page('http://%s:%d' % (host, port))
+    f = get_raw_page('http://%s:%d' % (host, port))
     
     d = defer.Deferred()
     f.deferred.addCallback(_on_callback, d)
@@ -76,11 +75,13 @@ def detect_stratum(host, port):
         # Invalid header or unsupported transport
         defer.returnValue(None)
     
-    netloc = urlparse.urlparse(header).netloc.split(':')
-    if len(netloc) == 1:
+    header = header.replace('stratum+tcp://', '').strip()
+    host = header.split(':')    
+    
+    if len(host) == 1:
         # Port is not specified
-        defer.returnValue((netloc, 3333))
-    elif len(netloc) == 2:
-        defer.returnValue((netloc[0], int(netloc[1])))
+        defer.returnValue((host[0], 3333))
+    elif len(host) == 2:
+        defer.returnValue((host[0], int(host[1])))
     
     defer.returnValue(None)
