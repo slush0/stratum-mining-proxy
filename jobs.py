@@ -215,7 +215,7 @@ class JobRegistry(object):
         
         if utils.uint256_from_str(hash_bin) > self.target:
             log.error("Share is below expected target")
-            return False
+            return True
         
         # 2. Lookup for job and extranonce used for creating given block header
         try:
