@@ -18,7 +18,9 @@ args = {
     'author': 'slush',
     'author_email': 'info@bitcion.cz',
     'url': 'http://mining.bitcoin.cz/stratum-mining/',
-    'py_modules': ['midstate',],
+    'py_modules': ['client_service', 'getwork_listener', 'jobs', 'midstate',
+                   'multicast_responder', 'stratum_listener', 'utils',
+                   'version', 'worker_registry'],
     'install_requires': ['setuptools', 'twisted', 'stratum', 'argparse'],
     'scripts': ['mining_proxy.py'],
 }
