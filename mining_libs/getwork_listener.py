@@ -11,10 +11,11 @@ log = stratum.logger.get_logger('proxy')
 class Root(Resource):
     isLeaf = True
     
-    def __init__(self, job_registry, workers, stratum_port):
+    def __init__(self, job_registry, workers, stratum_host, stratum_port):
         Resource.__init__(self)
         self.job_registry = job_registry
         self.workers = workers
+        self.stratum_host = stratum_host
         self.stratum_port = stratum_port
         
     def json_response(self, msg_id, result):
@@ -112,7 +113,9 @@ class Root(Resource):
             return "Authorization required"
          
         request.setHeader('content-type', 'application/json')
-        request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
+        #request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
+        log.info('stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
+        request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
         request.setHeader('x-long-polling', '/lp')
         request.setHeader('x-roll-ntime', 1)
 
@@ -129,7 +132,8 @@ class Root(Resource):
     def render_GET(self, request):
         if request.path == '/lp':
             request.setHeader('content-type', 'application/json')
-            request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
+            #request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
+            request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
             request.setHeader('x-long-polling', '/lp')
             request.setHeader('x-roll-ntime', 1)
             

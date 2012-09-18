@@ -112,8 +112,9 @@ def main(args):
     yield f.on_connect
     
     # Setup getwork listener    
-    reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers, stratum_port=args.port)),
-                      interface=args.getwork_host)
+    reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers,
+                                                    stratum_host=args.host, stratum_port=args.port)),
+                                                    interface=args.getwork_host)
     
     # Setup stratum listener
     #stratum_handler = StratumEventHandler(registry)
