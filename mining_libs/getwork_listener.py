@@ -89,19 +89,22 @@ class Root(Resource):
         request.finish()
         raise failure
         
-    def _on_lp_broadcast(self, _, request):
-        if request._disconnected:
-            # Miner disconnected before longpoll
-            return
-        
+    def _on_lp_broadcast(self, _, request):        
         try:
             worker_name = request.getUser()
         except:
             worker_name = '<unknown>'
             
         log.info("LP broadcast for worker '%s'" % worker_name)
-        request.write(self.json_response(0, self.job_registry.getwork()))
-        request.finish()
+        payload = self.json_response(0, self.job_registry.getwork())
+        
+        try:
+            request.write(payload)
+            request.finish()
+        except RuntimeError:
+            # RuntimeError is thrown by Request class when
+            # client is disconnected already
+            pass
         
     def render_POST(self, request):        
         (worker_name, password) = (request.getUser(), request.getPassword())
