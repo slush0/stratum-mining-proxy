@@ -69,10 +69,11 @@ class Job(object):
         return r            
         
 class JobRegistry(object):   
-    def __init__(self, f, cmd, no_midstate):
+    def __init__(self, f, cmd, no_midstate, real_target):
         self.f = f
         self.cmd = cmd # execute this command on new block
         self.no_midstate = no_midstate # Indicates if calculate midstate for getwork
+        self.real_target = real_target # Indicates if real stratum target will be propagated to miners
         self.jobs = []        
         self.last_job = None
         self.extranonce1 = None
@@ -82,6 +83,7 @@ class JobRegistry(object):
         self.target = 0
         self.target_hex = ''
         self.set_difficulty(1)
+        self.target1_hex = self.target_hex
         
         # Relation between merkle and job
         self.merkle_to_job= weakref.WeakValueDictionary()
@@ -191,8 +193,12 @@ class JobRegistry(object):
         hash1 = "00000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000010000"
 
         result = {'data': block_header,
-                'hash1': hash1,
-                'target': self.target_hex}
+                'hash1': hash1}
+        
+        if self.real_target:
+            result['target'] = self.target_hex
+        else:
+            result['target'] = self.target1_hex
     
         if not self.no_midstate and calculateMidstate:
             # Midstate module not found or disabled
