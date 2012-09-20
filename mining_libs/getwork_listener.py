@@ -63,7 +63,7 @@ class Root(Resource):
             return
 
         if data['method'] == 'getwork':
-            if not len(data['params']):
+            if 'params' not in data or not len(data['params']):
                                 
                 # getwork request
                 log.debug("Worker '%s' asks for new work" % worker_name)
