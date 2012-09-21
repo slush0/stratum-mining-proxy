@@ -27,7 +27,7 @@ Installation using Github
 -------------------------
 This is advanced option for experienced users, but give you the easiest way for updating the proxy.
 
-1. git clone git@github.com:slush0/stratum-mining-proxy.git
+1. git clone git://github.com/slush0/stratum-mining-proxy.git
 2. cd stratum-mining-proxy
 3. sudo python setup.py develop ; This will install required dependencies (namely Twisted and Stratum libraries),
 but don't install the package into the system.
