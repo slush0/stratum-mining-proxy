@@ -100,7 +100,7 @@ class JobRegistry(object):
         
     def set_difficulty(self, new_difficulty):
         dif1 = 0x00000000ffff0000000000000000000000000000000000000000000000000000 
-        self.target = dif1 / new_difficulty
+        self.target = int(dif1 / new_difficulty)
         self.target_hex = binascii.hexlify(utils.uint256_to_str(self.target))
         
     def build_full_extranonce(self, extranonce2):
