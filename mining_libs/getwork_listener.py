@@ -34,16 +34,26 @@ class Root(Resource):
             log.info("[%dms] Share from '%s' accepted" % (response_time, worker_name))
         else:
             log.info("[%dms] Share from '%s' REJECTED" % (response_time, worker_name))
-            
-        request.write(self.json_response(msg_id, result))
-        request.finish()
+         
+        try:   
+            request.write(self.json_response(msg_id, result))
+            request.finish()
+        except RuntimeError:
+            # RuntimeError is thrown by Request class when
+            # client is disconnected already
+            pass
         
     def _on_submit_failure(self, failure, request, msg_id, worker_name, start_time):
         response_time = (time.time() - start_time) * 1000
         
         # Submit for some reason failed
-        request.write(self.json_response(msg_id, False))
-        request.finish()
+        try:
+            request.write(self.json_response(msg_id, False))
+            request.finish()
+        except RuntimeError:
+            # RuntimeError is thrown by Request class when
+            # client is disconnected already
+            pass
 
         log.info("[%dms] Share from '%s' REJECTED: %s" % \
                  (response_time, worker_name, failure.getErrorMessage()))
