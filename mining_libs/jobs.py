@@ -159,7 +159,7 @@ class JobRegistry(object):
         extranonce2 = job.merkle_to_extranonce2[merkle_hash]
         return (job, extranonce2)
         
-    def getwork(self):
+    def getwork(self, no_midstate=True):
         '''Miner requests for new getwork'''
         
         job = self.last_job # Pick the latest job from pool
@@ -200,10 +200,10 @@ class JobRegistry(object):
         else:
             result['target'] = self.target1_hex
     
-        if not self.no_midstate and calculateMidstate:
+        if calculateMidstate and not (no_midstate or self.no_midstate):
             # Midstate module not found or disabled
             result['midstate'] = binascii.hexlify(calculateMidstate(header_bin))
-
+            
         return result            
         
     def submit(self, header, worker_name):

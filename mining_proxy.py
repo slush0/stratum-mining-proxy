@@ -70,8 +70,6 @@ def on_disconnect(f, workers, job_registry):
         
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
     return f              
-
-
     
 @defer.inlineCallbacks
 def main(args):
