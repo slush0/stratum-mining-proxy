@@ -70,7 +70,7 @@ def on_disconnect(f, workers, job_registry):
         
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
     return f              
-    
+
 @defer.inlineCallbacks
 def main(args):
     if args.port != 3333:
@@ -89,12 +89,24 @@ def main(args):
             args.port = new_host[1]
 
     log.info("Stratum proxy version: %s" % version.VERSION)
+    
+    if args.proxy:
+        proxy = args.proxy.split(':')
+        if len(proxy) < 2:
+            proxy = (proxy, 9050)
+        else:
+            proxy = (proxy[0], int(proxy[1]))
+        log.info("Using proxy %s:%d" % proxy)
+    else:
+        proxy = None
+
     log.info("Trying to connect to Stratum pool at %s:%d" % (args.host, args.port))        
-            
+        
     # Connect to Stratum pool
     f = SocketTransportClientFactory(args.host, args.port,
-                debug=args.verbose,
+                debug=args.verbose, proxy=proxy,
                 event_handler=client_service.ClientMiningService)
+    
     
     job_registry = jobs.JobRegistry(f, cmd=args.blocknotify_cmd,
                    no_midstate=args.no_midstate, real_target=args.real_target)
@@ -117,7 +129,7 @@ def main(args):
     
     # Setup stratum listener
     #stratum_handler = StratumEventHandler(registry)
-    reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
+    #reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
 
     # Setup multicast responder
     reactor.listenMulticast(3333, multicast_responder.MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
@@ -140,6 +152,7 @@ def parse_args():
     parser.add_argument('-nm', '--no-midstate', dest='no_midstate', action='store_true', help="Don't compute midstate for getwork. This has outstanding performance boost, but some old miners like Diablo don't work without midstate.")
     parser.add_argument('-rt', '--real-target', dest='real_target', action='store_true', help="Propagate >diff1 target to getwork miners. Some miners work incorrectly with higher difficulty.")
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
+    parser.add_argument('--proxy', dest='proxy', type=str, default='', help='Use socks5 proxy for upstream Stratum connection, specify as host:port')    
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     return parser.parse_args()
 
