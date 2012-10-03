@@ -90,6 +90,12 @@ def main(args):
 
     log.info("Stratum proxy version: %s" % version.VERSION)
     
+    if args.tor:
+        log.info("Configuring Tor connection")
+        args.proxy = '127.0.0.1:9050'
+        args.host = 'pool57wkuu5yuhzb.onion'
+        args.port = 3333
+        
     if args.proxy:
         proxy = args.proxy.split(':')
         if len(proxy) < 2:
@@ -152,7 +158,8 @@ def parse_args():
     parser.add_argument('-nm', '--no-midstate', dest='no_midstate', action='store_true', help="Don't compute midstate for getwork. This has outstanding performance boost, but some old miners like Diablo don't work without midstate.")
     parser.add_argument('-rt', '--real-target', dest='real_target', action='store_true', help="Propagate >diff1 target to getwork miners. Some miners work incorrectly with higher difficulty.")
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
-    parser.add_argument('--proxy', dest='proxy', type=str, default='', help='Use socks5 proxy for upstream Stratum connection, specify as host:port')    
+    parser.add_argument('--socks', dest='proxy', type=str, default='', help='Use socks5 proxy for upstream Stratum connection, specify as host:port')
+    parser.add_argument('--tor', dest='tor', action='store_true', help='Configure proxy to mine over Tor (requires Tor running on local machine)')    
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     return parser.parse_args()
 
