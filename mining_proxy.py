@@ -47,28 +47,32 @@ def on_shutdown(f):
 def on_connect(f, workers, job_registry):
     '''Callback when proxy get connected to the pool'''
     log.info("Connected to Stratum pool at %s:%d" % f.main_host)
-    
-    # Every worker have to re-autorize
-    workers.clear_authorizations() 
+    #reactor.callLater(30, f.client.transport.loseConnection)
     
     # Hook to on_connect again
     f.on_connect.addCallback(on_connect, workers, job_registry)
+    
+    # Every worker have to re-autorize
+    workers.clear_authorizations() 
     
     # Subscribe for receiving jobs
     log.info("Subscribing for mining jobs")
     (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))
     job_registry.set_extranonce(extranonce1, extranonce2_size)
+    stratum_listener.StratumProxyService._set_extranonce(extranonce1, extranonce2_size)
     
     defer.returnValue(f)
      
 def on_disconnect(f, workers, job_registry):
     '''Callback when proxy get disconnected from the pool'''
     log.info("Disconnected from Stratum pool at %s:%d" % f.main_host)
-
+    f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
+    
+    stratum_listener.MiningSubscription.disconnect_all()
+    
     # Reject miners because we don't give a *job :-)
     workers.clear_authorizations() 
-        
-    f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
+    
     return f              
 
 @defer.inlineCallbacks
@@ -134,8 +138,8 @@ def main(args):
                                                     interface=args.getwork_host)
     
     # Setup stratum listener
-    #stratum_handler = StratumEventHandler(registry)
-    #reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
+    stratum_listener.StratumProxyService._set_upstream_factory(f)
+    reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
 
     # Setup multicast responder
     reactor.listenMulticast(3333, multicast_responder.MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)

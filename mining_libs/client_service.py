@@ -3,6 +3,8 @@ from jobs import Job
 import utils
 import version
 
+import stratum_listener
+
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
 
@@ -29,13 +31,20 @@ class ClientMiningService(GenericEventHandler):
             log.debug("coinb2 = %s" % coinb2)
             log.debug("merkle_branch = %s" % merkle_branch)
             '''
+
+            # Broadcast to Stratum clients
+            stratum_listener.MiningSubscription.on_template(
+                            job_id, prevhash, coinb1, coinb2, merkle_branch, version, nbits, ntime, clean_jobs)
             
+            # Broadcast to getwork clients
             job = Job.build_from_broadcast(job_id, prevhash, coinb1, coinb2, merkle_branch, version, nbits, ntime)
             self.job_registry.add_template(job, clean_jobs)
             
         elif method == 'mining.set_difficulty':
             difficulty = params[0]
             log.info("Setting new difficulty: %s" % difficulty)
+            
+            stratum_listener.DifficultySubscription.on_new_difficulty(difficulty)
             self.job_registry.set_difficulty(difficulty)
                     
         elif method == 'client.reconnect':
