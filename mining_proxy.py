@@ -134,7 +134,7 @@ def main(args):
     
     # Setup getwork listener    
     reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers,
-                                                    stratum_host=args.host, stratum_port=args.port)),
+                                                    stratum_host=args.stratum_host, stratum_port=args.stratum_port)),
                                                     interface=args.getwork_host)
     
     # Setup stratum listener
