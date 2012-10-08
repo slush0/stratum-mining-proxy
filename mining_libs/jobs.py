@@ -134,9 +134,7 @@ class JobRegistry(object):
             
         self.jobs.append(template)
         self.last_job = template
-        
-        log.info("New job for prevhash %s" % utils.format_hash(template.prevhash))
-        
+                
         if clean_jobs:
             # Force miners to reload jobs
             on_block = self.on_block

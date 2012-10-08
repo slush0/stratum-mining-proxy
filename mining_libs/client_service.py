@@ -31,14 +31,19 @@ class ClientMiningService(GenericEventHandler):
             log.debug("coinb2 = %s" % coinb2)
             log.debug("merkle_branch = %s" % merkle_branch)
             '''
-
+        
             # Broadcast to Stratum clients
             stratum_listener.MiningSubscription.on_template(
                             job_id, prevhash, coinb1, coinb2, merkle_branch, version, nbits, ntime, clean_jobs)
             
             # Broadcast to getwork clients
             job = Job.build_from_broadcast(job_id, prevhash, coinb1, coinb2, merkle_branch, version, nbits, ntime)
+            log.info("New job %s for prevhash %s, clean_jobs=%s" % \
+                 (job.job_id, utils.format_hash(job.prevhash), clean_jobs))
+
             self.job_registry.add_template(job, clean_jobs)
+            
+            
             
         elif method == 'mining.set_difficulty':
             difficulty = params[0]
