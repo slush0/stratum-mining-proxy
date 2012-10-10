@@ -5,7 +5,7 @@ from twisted.internet import defer
 
 from stratum.services import GenericService
 from stratum.pubsub import Pubsub, Subscription
-from stratum.custom_exceptions import ServiceException
+from stratum.custom_exceptions import ServiceException, RemoteServiceException
 
 from jobs import JobRegistry
 
@@ -118,7 +118,7 @@ class StratumProxyService(GenericService):
     def authorize(self, worker_name, worker_password):
         if self._f.client == None or not self._f.client.connected:
             yield self._f.on_connect
-        
+                        
         result = (yield self._f.rpc('mining.authorize', [worker_name, worker_password]))
         defer.returnValue(result)
     
@@ -161,11 +161,11 @@ class StratumProxyService(GenericService):
         
         try:
             result = (yield self._f.rpc('mining.submit', [worker_name, job_id, tail+extranonce2, ntime, nonce]))
-        except Exception as exc:
+        except RemoteServiceException as exc:
             response_time = (time.time() - start) * 1000
             log.info("[%dms] Share from '%s' REJECTED: %s" % (response_time, worker_name, str(exc)))
-            raise
-        
+            raise SubmitException(*exc.args)
+
         response_time = (time.time() - start) * 1000
         log.info("[%dms] Share from '%s' accepted" % (response_time, worker_name))
         defer.returnValue(result)
