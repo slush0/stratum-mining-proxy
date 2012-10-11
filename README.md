@@ -38,6 +38,14 @@ proxy connects to Slush's pool interface.
 7. If you want to connect to another pool or change other proxy settings, type "./mining_proxy.py --help".
 8. If you want to update the proxy, type "git pull" in the package directory.
 
+Compiling midstate C extension
+------------------------------
+For some really big operations using getwork interface of this proxy, you'll find
+useful "midstatec" C extension, which significantly speeds up midstate calculations
+(yes, plain python implementation is *so* slow). For enabling this extension,
+just type "make" in midstatec directory. Proxy will auto-detect compiled extension
+on next startup.
+
 Contact
 -------
 
