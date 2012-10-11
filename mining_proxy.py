@@ -21,6 +21,8 @@ from stratum import settings
 settings.LOGLEVEL='INFO'
 
 import argparse
+import time
+
 from twisted.internet import reactor, defer
 from stratum.socket_transport import SocketTransportFactory, SocketTransportClientFactory
 from stratum.services import ServiceEventHandler
@@ -75,6 +77,28 @@ def on_disconnect(f, workers, job_registry):
     
     return f              
 
+def test_launcher(result, job_registry):
+    def run_test():
+        log.info("Running performance self-test...")
+        for m in (True, False):
+            log.info("Generating with midstate: %s" % m)
+            log.info("Example getwork:")
+            log.info(job_registry.getwork(no_midstate=not m))
+
+            start = time.time()
+            n = 10000
+            
+            for x in range(n):
+                job_registry.getwork(no_midstate=not m)
+                
+            log.info("%d getworks generated in %.03f sec, %d gw/s" % \
+                     (n, time.time() - start, n / (time.time()-start)))
+            
+        log.info("Test done")
+    reactor.callLater(1, run_test)
+    return result
+
+
 @defer.inlineCallbacks
 def main(args):
     if args.port != 3333:
@@ -125,6 +149,9 @@ def main(args):
     workers = worker_registry.WorkerRegistry(f)
     f.on_connect.addCallback(on_connect, workers, job_registry)
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
+
+    if args.test:
+        f.on_connect.addCallback(test_launcher, job_registry)
     
     # Cleanup properly on shutdown
     reactor.addSystemEventTrigger('before', 'shutdown', on_shutdown, f)
@@ -163,7 +190,8 @@ def parse_args():
     parser.add_argument('-rt', '--real-target', dest='real_target', action='store_true', help="Propagate >diff1 target to getwork miners. Some miners work incorrectly with higher difficulty.")
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
     parser.add_argument('--socks', dest='proxy', type=str, default='', help='Use socks5 proxy for upstream Stratum connection, specify as host:port')
-    parser.add_argument('--tor', dest='tor', action='store_true', help='Configure proxy to mine over Tor (requires Tor running on local machine)')    
+    parser.add_argument('--tor', dest='tor', action='store_true', help='Configure proxy to mine over Tor (requires Tor running on local machine)')
+    parser.add_argument('-t', '--test', dest='test', action='store_true', help='Run performance test on startup')    
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     return parser.parse_args()
 
