@@ -159,23 +159,26 @@ def main(args):
     # Block until proxy connect to the pool
     yield f.on_connect
     
-    # Setup getwork listener    
-    reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers,
+    # Setup getwork listener
+    if args.getwork_port > 0:    
+        reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers,
                                                     stratum_host=args.stratum_host, stratum_port=args.stratum_port)),
                                                     interface=args.getwork_host)
     
     # Setup stratum listener
-    stratum_listener.StratumProxyService._set_upstream_factory(f)
-    reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
+    if args.stratum_port > 0:
+        stratum_listener.StratumProxyService._set_upstream_factory(f)
+        reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
 
     # Setup multicast responder
     reactor.listenMulticast(3333, multicast_responder.MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
     
     log.info("-----------------------------------------------------------------------")
-    if args.getwork_host == '0.0.0.0':
+    if args.getwork_host == '0.0.0.0' and args.stratum_host == '0.0.0.0':
         log.info("PROXY IS LISTENING ON ALL IPs ON PORT %d (stratum) AND %d (getwork)" % (args.stratum_port, args.getwork_port))
     else:
-        log.info("LISTENING FOR MINERS ON http://%s:%s" % (args.getwork_host, args.getwork_port))
+        log.info("LISTENING FOR MINERS ON http://%s:%d (getwork) and stratum+tcp://%s:%d (stratum)" % \
+                 (args.getwork_host, args.getwork_port, args.stratum_host, args.stratum_port))
     log.info("-----------------------------------------------------------------------")
 
 def parse_args():
