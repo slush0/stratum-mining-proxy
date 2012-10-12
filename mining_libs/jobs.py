@@ -90,6 +90,7 @@ class JobRegistry(object):
         
         self.target = 0
         self.target_hex = ''
+        self.difficulty = 1
         self.set_difficulty(1)
         self.target1_hex = self.target_hex
         
@@ -110,6 +111,7 @@ class JobRegistry(object):
         dif1 = 0x00000000ffff0000000000000000000000000000000000000000000000000000 
         self.target = int(dif1 / new_difficulty)
         self.target_hex = binascii.hexlify(utils.uint256_to_str(self.target))
+        self.difficulty = new_difficulty
         
     def build_full_extranonce(self, extranonce2):
         '''Join extranonce1 and extranonce2 together while padding

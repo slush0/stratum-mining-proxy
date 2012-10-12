@@ -31,7 +31,7 @@ class Root(Resource):
     def _on_submit(self, result, request, msg_id, worker_name, start_time):
         response_time = (time.time() - start_time) * 1000
         if result == True:
-            log.info("[%dms] Share from '%s' accepted" % (response_time, worker_name))
+            log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, self.job_registry.difficulty))
         else:
             log.info("[%dms] Share from '%s' REJECTED" % (response_time, worker_name))
          

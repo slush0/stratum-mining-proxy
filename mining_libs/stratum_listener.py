@@ -123,7 +123,7 @@ class StratumProxyService(GenericService):
         defer.returnValue(result)
     
     @defer.inlineCallbacks
-    def subscribe(self):        
+    def subscribe(self):    
         if self._f.client == None or not self._f.client.connected:
             yield self._f.on_connect
             
@@ -167,5 +167,5 @@ class StratumProxyService(GenericService):
             raise SubmitException(*exc.args)
 
         response_time = (time.time() - start) * 1000
-        log.info("[%dms] Share from '%s' accepted" % (response_time, worker_name))
+        log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, DifficultySubscription.difficulty))
         defer.returnValue(result)
