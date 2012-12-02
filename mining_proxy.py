@@ -145,6 +145,7 @@ def main(args):
     job_registry = jobs.JobRegistry(f, cmd=args.blocknotify_cmd,
                    no_midstate=args.no_midstate, real_target=args.real_target)
     client_service.ClientMiningService.job_registry = job_registry
+    client_service.ClientMiningService.reset_timeout()
     
     workers = worker_registry.WorkerRegistry(f)
     f.on_connect.addCallback(on_connect, workers, job_registry)
