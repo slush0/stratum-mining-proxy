@@ -164,4 +164,4 @@ class Root(Resource):
             return NOT_DONE_YET
         
         return "This is Stratum mining proxy. It is used for providing work to getwork-compatible miners "\
-            "from modern Stratum-based bitcoin mining pools."
+            "from modern Stratum-based bitcoin mining pools.\nExample getwork response:\n%s" % json.dumps(self.job_registry.getwork(False))
