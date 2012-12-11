@@ -187,8 +187,7 @@ def main(args):
     
     
     job_registry = jobs.JobRegistry(f, cmd=args.blocknotify_cmd,
-                   no_midstate=args.no_midstate, real_target=args.real_target,
-                   custom_user=args.custom_user, custom_password=args.custom_password)
+                   no_midstate=args.no_midstate, real_target=args.real_target)
     client_service.ClientMiningService.job_registry = job_registry
     client_service.ClientMiningService.reset_timeout()
     
@@ -209,7 +208,8 @@ def main(args):
     if args.getwork_port > 0:
         reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers,
                                                     stratum_host=args.stratum_host, stratum_port=args.stratum_port,
-                                                    custom_lp=args.custom_lp, custom_stratum=args.custom_stratum)),
+                                                    custom_lp=args.custom_lp, custom_stratum=args.custom_stratum,
+                                                    custom_user=args.custom_user, custom_password=args.custom_password)),
                                                     interface=args.getwork_host)
     
     # Setup stratum listener

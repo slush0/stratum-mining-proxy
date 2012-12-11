@@ -77,7 +77,7 @@ class Job(object):
         return r            
         
 class JobRegistry(object):   
-    def __init__(self, f, cmd, no_midstate, real_target, custom_user=None, custom_password=''):
+    def __init__(self, f, cmd, no_midstate, real_target):
         self.f = f
         self.cmd = cmd # execute this command on new block
         self.no_midstate = no_midstate # Indicates if calculate midstate for getwork
@@ -87,9 +87,6 @@ class JobRegistry(object):
         self.extranonce1 = None
         self.extranonce1_bin = None
         self.extranonce2_size = None
-        
-        self.custom_user = custom_user
-        self.custom_password = custom_password
         
         self.target = 0
         self.target_hex = ''
@@ -217,10 +214,7 @@ class JobRegistry(object):
             
         return result            
         
-    def submit(self, header, worker_name):
-        if self.custom_user:
-            worker_name = self.custom_user
-            
+    def submit(self, header, worker_name):            
         # Drop unused padding
         header = header[:160]
 

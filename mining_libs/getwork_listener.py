@@ -11,7 +11,8 @@ log = stratum.logger.get_logger('proxy')
 class Root(Resource):
     isLeaf = True
     
-    def __init__(self, job_registry, workers, stratum_host, stratum_port, custom_stratum='', custom_lp=''):
+    def __init__(self, job_registry, workers, stratum_host, stratum_port,
+                 custom_stratum=None, custom_lp=None, custom_user=None, custom_password=''):
         Resource.__init__(self)
         self.job_registry = job_registry
         self.workers = workers
@@ -19,6 +20,8 @@ class Root(Resource):
         self.stratum_port = stratum_port
         self.custom_stratum = custom_stratum
         self.custom_lp = custom_lp
+        self.custom_user = custom_user
+        self.custom_password = custom_password
         
     def json_response(self, msg_id, result):
         resp = json.dumps({'id': msg_id, 'result': result, 'error': None})
@@ -154,9 +157,13 @@ class Root(Resource):
             self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
             return NOT_DONE_YET
                 
+        if self.custom_user:
+            worker_name = self.custom_user
+            password = self.custom_password
+        
         d = defer.maybeDeferred(self.workers.authorize, worker_name, password)
         d.addCallback(self._on_authorized, request, worker_name)
-        d.addErrback(self._on_failure, request)
+        d.addErrback(self._on_failure, request)    
         return NOT_DONE_YET
 
     def render_GET(self, request):
