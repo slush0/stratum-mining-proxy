@@ -11,12 +11,14 @@ log = stratum.logger.get_logger('proxy')
 class Root(Resource):
     isLeaf = True
     
-    def __init__(self, job_registry, workers, stratum_host, stratum_port):
+    def __init__(self, job_registry, workers, stratum_host, stratum_port, custom_stratum='', custom_lp=''):
         Resource.__init__(self)
         self.job_registry = job_registry
         self.workers = workers
         self.stratum_host = stratum_host
         self.stratum_port = stratum_port
+        self.custom_stratum = custom_stratum
+        self.custom_lp = custom_lp
         
     def json_response(self, msg_id, result):
         resp = json.dumps({'id': msg_id, 'result': result, 'error': None})
@@ -101,6 +103,22 @@ class Root(Resource):
         request.finish()
         raise failure
         
+    def _prepare_headers(self, request): 
+        request.setHeader('content-type', 'application/json')
+        
+        if self.custom_stratum:
+            request.setHeader('x-stratum', self.custom_stratum)    
+        elif self.stratum_port:
+            print '!!!', self.stratum_port
+            request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
+        
+        if self.custom_lp:
+            request.setHeader('x-long-polling', self.custom_lp)
+        else:
+            request.setHeader('x-long-polling', '/lp')
+            
+        request.setHeader('x-roll-ntime', 1)
+        
     def _on_lp_broadcast(self, _, request):        
         try:
             worker_name = request.getUser()
@@ -128,13 +146,9 @@ class Root(Resource):
             request.setResponseCode(401)
             request.setHeader('WWW-Authenticate', 'Basic realm="stratum-mining-proxy"')
             return "Authorization required"
-         
-        request.setHeader('content-type', 'application/json')
-        request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
-        #request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
-        request.setHeader('x-long-polling', '/lp')
-        request.setHeader('x-roll-ntime', 1)
-
+        
+        self._prepare_headers(request)
+        
         if request.path == '/lp':
             log.info("Worker '%s' subscribed for LP" % worker_name)
             self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
@@ -147,11 +161,7 @@ class Root(Resource):
 
     def render_GET(self, request):
         if request.path == '/lp':
-            request.setHeader('content-type', 'application/json')
-            request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
-            #request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (self.stratum_host, self.stratum_port))
-            request.setHeader('x-long-polling', '/lp')
-            request.setHeader('x-roll-ntime', 1)
+            self._prepare_headers(request)
             
             try:
                 worker_name = request.getUser()
