@@ -33,6 +33,8 @@ def parse_args():
     parser.add_argument('-rt', '--real-target', dest='real_target', action='store_true', help="Propagate >diff1 target to getwork miners. Some miners work incorrectly with higher difficulty.")
     parser.add_argument('-cl', '--custom-lp', dest='custom_lp', type=str, help='Override URL provided in X-Long-Polling header')
     parser.add_argument('-cs', '--custom-stratum', dest='custom_stratum', type=str, help='Override URL provided in X-Stratum header')
+    parser.add_argument('-cu', '--custom-user', dest='custom_user', type=str, help='Use this username for submitting shares')
+    parser.add_argument('-cp', '--custom-password', dest='custom_password', type=str, help='Use this password for submitting shares')    
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
     parser.add_argument('--socks', dest='proxy', type=str, default='', help='Use socks5 proxy for upstream Stratum connection, specify as host:port')
     parser.add_argument('--tor', dest='tor', action='store_true', help='Configure proxy to mine over Tor (requires Tor running on local machine)')
@@ -90,6 +92,10 @@ def on_connect(f, workers, job_registry):
     # Every worker have to re-autorize
     workers.clear_authorizations() 
     
+    if args.custom_user:
+        log.warning("Authorizing custom user %s, password %s" % (args.custom_user, args.custom_password))
+        workers.authorize(args.custom_user, args.custom_password)
+        
     # Subscribe for receiving jobs
     log.info("Subscribing for mining jobs")
     (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))
@@ -181,7 +187,8 @@ def main(args):
     
     
     job_registry = jobs.JobRegistry(f, cmd=args.blocknotify_cmd,
-                   no_midstate=args.no_midstate, real_target=args.real_target)
+                   no_midstate=args.no_midstate, real_target=args.real_target,
+                   custom_user=args.custom_user, custom_password=args.custom_password)
     client_service.ClientMiningService.job_registry = job_registry
     client_service.ClientMiningService.reset_timeout()
     
