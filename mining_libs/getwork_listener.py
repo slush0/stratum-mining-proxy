@@ -30,12 +30,12 @@ class Root(Resource):
         #print "ERROR", resp
         return resp         
     
-    def _on_submit(self, result, request, msg_id, worker_name, start_time):
+    def _on_submit(self, result, request, msg_id, blockheader, worker_name, start_time):
         response_time = (time.time() - start_time) * 1000
         if result == True:
-            log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, self.job_registry.difficulty))
+            log.warning("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, self.job_registry.difficulty))
         else:
-            log.info("[%dms] Share from '%s' REJECTED" % (response_time, worker_name))
+            log.warning("[%dms] Share from '%s' REJECTED" % (response_time, worker_name))
          
         try:   
             request.write(self.json_response(msg_id, result))
@@ -45,7 +45,7 @@ class Root(Resource):
             # client is disconnected already
             pass
         
-    def _on_submit_failure(self, failure, request, msg_id, worker_name, start_time):
+    def _on_submit_failure(self, failure, request, msg_id, blockheader, worker_name, start_time):
         response_time = (time.time() - start_time) * 1000
         
         # Submit for some reason failed
@@ -57,7 +57,7 @@ class Root(Resource):
             # client is disconnected already
             pass
 
-        log.info("[%dms] Share from '%s' REJECTED: %s" % \
+        log.warning("[%dms] Share from '%s' REJECTED: %s" % \
                  (response_time, worker_name, failure.getErrorMessage()))
         
     def _on_authorized(self, is_authorized, request, worker_name):
@@ -69,7 +69,7 @@ class Root(Resource):
             return
                 
         if not self.job_registry.last_job:
-            log.info('Getworkmaker is waiting for a job...')
+            log.warning('Getworkmaker is waiting for a job...')
             request.write(self.json_error(data['id'], -1, "Getworkmake is waiting for a job..."))
             request.finish()
             return
@@ -91,8 +91,8 @@ class Root(Resource):
                 d = defer.maybeDeferred(self.job_registry.submit, data['params'][0], worker_name)
 
                 start_time = time.time()
-                d.addCallback(self._on_submit, request, data['id'], worker_name, start_time)
-                d.addErrback(self._on_submit_failure, request, data['id'], worker_name, start_time)
+                d.addCallback(self._on_submit, request, data['id'], data['params'][0][:160], worker_name, start_time)
+                d.addErrback(self._on_submit_failure, request, data['id'], data['params'][0][:160], worker_name, start_time)
                 return
             
         request.write(self.json_error(data['id'], -1, "Unsupported method '%s'" % data['method']))
@@ -142,7 +142,7 @@ class Root(Resource):
         (worker_name, password) = (request.getUser(), request.getPassword())
 
         if worker_name == '':
-            log.info("Authorization required")
+            log.warning("Authorization required")
             request.setResponseCode(401)
             request.setHeader('WWW-Authenticate', 'Basic realm="stratum-mining-proxy"')
             return "Authorization required"
@@ -150,7 +150,7 @@ class Root(Resource):
         self._prepare_headers(request)
         
         if request.path == '/lp':
-            log.info("Worker '%s' subscribed for LP" % worker_name)
+            log.warning("Worker '%s' subscribed for LP" % worker_name)
             self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
             return NOT_DONE_YET
                 

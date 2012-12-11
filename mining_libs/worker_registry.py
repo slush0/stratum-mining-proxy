@@ -30,7 +30,7 @@ class WorkerRegistry(object):
             
         if worker_name in self.unauthorized and time.time() - self.last_failure < 60:
             # Prevent flooding of mining.authorize() requests 
-            log.info("Authentication of worker '%s' with password '%s' failed, next attempt in few seconds..." % \
+            log.warning("Authentication of worker '%s' with password '%s' failed, next attempt in few seconds..." % \
                     (worker_name, password))
             return False
         

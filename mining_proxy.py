@@ -47,10 +47,13 @@ if __name__ == '__main__':
     # We need to parse args & setup Stratum environment
     # before any other imports
     args = parse_args()
-    if args.verbose:
+    if args.quiet:
+        settings.DEBUG = False
+        settings.LOGLEVEL = 'WARNING'
+    elif args.verbose:
         settings.DEBUG = True
         settings.LOGLEVEL = 'DEBUG'
-        
+            
 from twisted.internet import reactor, defer
 from stratum.socket_transport import SocketTransportFactory, SocketTransportClientFactory
 from stratum.services import ServiceEventHandler
@@ -144,10 +147,10 @@ def main(args):
             args.host = new_host[0]
             args.port = new_host[1]
 
-    log.info("Stratum proxy version: %s" % version.VERSION)
+    log.warning("Stratum proxy version: %s" % version.VERSION)
     
     if args.tor:
-        log.info("Configuring Tor connection")
+        log.warning("Configuring Tor connection")
         args.proxy = '127.0.0.1:9050'
         args.host = 'pool57wkuu5yuhzb.onion'
         args.port = 3333
@@ -158,11 +161,11 @@ def main(args):
             proxy = (proxy, 9050)
         else:
             proxy = (proxy[0], int(proxy[1]))
-        log.info("Using proxy %s:%d" % proxy)
+        log.warning("Using proxy %s:%d" % proxy)
     else:
         proxy = None
 
-    log.info("Trying to connect to Stratum pool at %s:%d" % (args.host, args.port))        
+    log.warning("Trying to connect to Stratum pool at %s:%d" % (args.host, args.port))        
         
     # Connect to Stratum pool
     f = SocketTransportClientFactory(args.host, args.port,
@@ -203,13 +206,13 @@ def main(args):
     # Setup multicast responder
     reactor.listenMulticast(3333, multicast_responder.MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
     
-    log.info("-----------------------------------------------------------------------")
+    log.warning("-----------------------------------------------------------------------")
     if args.getwork_host == '0.0.0.0' and args.stratum_host == '0.0.0.0':
-        log.info("PROXY IS LISTENING ON ALL IPs ON PORT %d (stratum) AND %d (getwork)" % (args.stratum_port, args.getwork_port))
+        log.warning("PROXY IS LISTENING ON ALL IPs ON PORT %d (stratum) AND %d (getwork)" % (args.stratum_port, args.getwork_port))
     else:
-        log.info("LISTENING FOR MINERS ON http://%s:%d (getwork) and stratum+tcp://%s:%d (stratum)" % \
+        log.warning("LISTENING FOR MINERS ON http://%s:%d (getwork) and stratum+tcp://%s:%d (stratum)" % \
                  (args.getwork_host, args.getwork_port, args.stratum_host, args.stratum_port))
-    log.info("-----------------------------------------------------------------------")
+    log.warning("-----------------------------------------------------------------------")
 
 if __name__ == '__main__':
     main(args)
