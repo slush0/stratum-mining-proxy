@@ -67,13 +67,13 @@ class Root(Resource):
         data = json.loads(request.content.read())
         
         if not is_authorized:
-            request.write(self.json_error(data['id'], -1, "Bad worker credentials"))
+            request.write(self.json_error(data.get('id', 0), -1, "Bad worker credentials"))
             request.finish()
             return
                 
         if not self.job_registry.last_job:
             log.warning('Getworkmaker is waiting for a job...')
-            request.write(self.json_error(data['id'], -1, "Getworkmake is waiting for a job..."))
+            request.write(self.json_error(data.get('id', 0), -1, "Getworkmake is waiting for a job..."))
             request.finish()
             return
 
@@ -81,10 +81,10 @@ class Root(Resource):
             if 'params' not in data or not len(data['params']):
                                 
                 # getwork request
-                log.debug("Worker '%s' asks for new work" % worker_name)
+                log.info("Worker '%s' asks for new work" % worker_name)
                 extensions = request.getHeader('x-mining-extensions')
                 no_midstate =  extensions and 'midstate' in extensions
-                request.write(self.json_response(data['id'], self.job_registry.getwork(no_midstate=no_midstate)))
+                request.write(self.json_response(data.get('id', 0), self.job_registry.getwork(no_midstate=no_midstate)))
                 request.finish()
                 return
             
@@ -94,11 +94,11 @@ class Root(Resource):
                 d = defer.maybeDeferred(self.job_registry.submit, data['params'][0], worker_name)
 
                 start_time = time.time()
-                d.addCallback(self._on_submit, request, data['id'], data['params'][0][:160], worker_name, start_time)
-                d.addErrback(self._on_submit_failure, request, data['id'], data['params'][0][:160], worker_name, start_time)
+                d.addCallback(self._on_submit, request, data.get('id', 0), data['params'][0][:160], worker_name, start_time)
+                d.addErrback(self._on_submit_failure, request, data.get('id', 0), data['params'][0][:160], worker_name, start_time)
                 return
             
-        request.write(self.json_error(data['id'], -1, "Unsupported method '%s'" % data['method']))
+        request.write(self.json_error(data.get('id'), -1, "Unsupported method '%s'" % data['method']))
         request.finish()
         
     def _on_failure(self, failure, request):
