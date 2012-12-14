@@ -112,7 +112,6 @@ class Root(Resource):
         if self.custom_stratum:
             request.setHeader('x-stratum', self.custom_stratum)    
         elif self.stratum_port:
-            print '!!!', self.stratum_port
             request.setHeader('x-stratum', 'stratum+tcp://%s:%d' % (request.getRequestHostname(), self.stratum_port))
         
         if self.custom_lp:
