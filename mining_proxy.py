@@ -20,6 +20,7 @@
 import argparse
 import time
 import os
+import socket
 
 def parse_args():
     parser = argparse.ArgumentParser(description='This proxy allows you to run getwork-based miners against Stratum mining pool.')
@@ -206,11 +207,16 @@ def main(args):
     
     # Setup getwork listener
     if args.getwork_port > 0:
-        reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers,
+        conn = reactor.listenTCP(args.getwork_port, Site(getwork_listener.Root(job_registry, workers,
                                                     stratum_host=args.stratum_host, stratum_port=args.stratum_port,
                                                     custom_lp=args.custom_lp, custom_stratum=args.custom_stratum,
                                                     custom_user=args.custom_user, custom_password=args.custom_password)),
                                                     interface=args.getwork_host)
+
+        conn.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1) # Enable keepalive packets
+        conn.socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 60) # Seconds before sending keepalive probes
+        conn.socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 1) # Interval in seconds between keepalive probes
+        conn.socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPCNT, 5) # Failed keepalive probles before declaring other end dead
     
     # Setup stratum listener
     if args.stratum_port > 0:
