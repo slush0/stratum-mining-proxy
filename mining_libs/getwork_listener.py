@@ -141,6 +141,8 @@ class Root(Resource):
             pass
         
     def render_POST(self, request):        
+        self._prepare_headers(request)
+
         (worker_name, password) = (request.getUser(), request.getPassword())
 
         if worker_name == '':
@@ -148,8 +150,6 @@ class Root(Resource):
             request.setResponseCode(401)
             request.setHeader('WWW-Authenticate', 'Basic realm="stratum-mining-proxy"')
             return "Authorization required"
-        
-        self._prepare_headers(request)
         
         if request.path == '/lp':
             log.warning("Worker '%s' subscribed for LP" % worker_name)
@@ -166,18 +166,14 @@ class Root(Resource):
         return NOT_DONE_YET
 
     def render_GET(self, request):
-        if request.path == '/lp':
-            self._prepare_headers(request)
+        self._prepare_headers(request)
             
-            try:
-                worker_name = request.getUser()
-            except:
-                worker_name = '<unknown>'
+        try:
+            worker_name = request.getUser()
+        except:
+            worker_name = '<unknown>'
                 
-            log.info("Worker '%s' subscribed for LP" % worker_name)
+        log.warning("Worker '%s' subscribed for LP at %s" % (worker_name, request.path))
             
-            self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
-            return NOT_DONE_YET
-        
-        return "This is Stratum mining proxy. It is used for providing work to getwork-compatible miners "\
-            "from modern Stratum-based bitcoin mining pools.\nExample getwork response:\n%s" % json.dumps(self.job_registry.getwork(False))
+        self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
+        return NOT_DONE_YET
