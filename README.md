@@ -7,7 +7,7 @@ as described here: http://mining.bitcoin.cz/stratum-mining.
 Installation on Windows
 -----------------------
 
-1. Download official Windows binaries (EXE) from https://github.com/slush0/stratum-mining-proxy/downloads
+1. Download official Windows binaries (EXE) from https://mining.bitcoin.cz/media/download/mining_proxy.exe
 2. Open downloaded file. It will open console window. Using default settings, proxy connects to Slush's pool interface
 3. If you want to connect to another pool or change other proxy settings, type "mining_proxy.exe --help" in console window.
 
