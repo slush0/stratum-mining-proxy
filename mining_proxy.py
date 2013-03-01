@@ -138,6 +138,25 @@ def test_launcher(result, job_registry):
     reactor.callLater(1, run_test)
     return result
 
+def print_deprecation_warning():
+    '''Once new version is detected, this method prints deprecation warning every 30 seconds.'''
+
+    log.warning("New proxy version available! Please update!")
+    reactor.callLater(30, print_deprecation_warning)
+
+def test_update():
+    '''Perform lookup for newer proxy version, on startup and then once a day.
+    When new version is found, it starts printing warning message and turned off next checks.'''
+ 
+    GIT_URL='https://raw.github.com/slush0/stratum-mining-proxy/master/'
+    VERSION_FILE = 'mining_libs/version.py'
+
+    import urllib2
+    log.warning("Checking for updates...")
+    if open(VERSION_FILE).read() != urllib2.urlopen(GIT_URL + VERSION_FILE).read():
+        print_deprecation_warning()
+        return # New version already detected, stop periodic checks
+    reactor.callLater(3600*24, test_update)
 
 @defer.inlineCallbacks
 def main(args):
@@ -162,6 +181,8 @@ def main(args):
             args.port = new_host[1]
 
     log.warning("Stratum proxy version: %s" % version.VERSION)
+    # Setup periodic checks for a new version
+    test_update()
     
     if args.tor:
         log.warning("Configuring Tor connection")
