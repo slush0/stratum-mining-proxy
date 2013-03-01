@@ -23,8 +23,21 @@ Installation on Linux
 proxy connects to Slush's pool interface.
 5. If you want to connect to another pool or change other proxy settings, type "mining_proxy.py --help".
 
-Installation using Github
--------------------------
+Installation on Mac
+-------------------
+1. Download TGZ file from https://github.com/slush0/stratum-mining-proxy/tarball/master
+2. Unpack it by typing "tar xf slush0-stratum-mining_proxy*.tar.gz"
+3. On Mac OS X you already have Python installed on your system, but you lack the llvm-gcc-4.2 binary required to run the setup.py file, so:
+3. a) If you don't want to install Xcode, get gcc here: https://github.com/kennethreitz/osx-gcc-installer
+3. b) OR download Xcode (free) from the App Store, Open it up (it's in your applications folder) and go to preferences, to the downloads section and download/install the 'command line tools'. This will install llvm-gc-4.2.
+4. Type "sudo python setup.py install" in the unpacked directory from step 2.
+5. You can start the proxy by typing "./mining_proxy.py" in the terminal window. Using default settings, proxy connects to Slush's pool interface.
+6. If you want to connect to another pool or change other proxy settings, type "mining_proxy.py --help".
+
+N.B. Once Apple releases Xcode 4.7 they will remove the optional install of gcc (they want you to use clang). When that happens you can either choose not to upgrade, or return to the aforementioned https://github.com/kennethreitz/osx-gcc-installer and download the specific gcc binary for your version of Mac OS.
+
+Installation on Linux using Git
+-------------------------------
 This is advanced option for experienced users, but give you the easiest way for updating the proxy.
 
 1. git clone git://github.com/slush0/stratum-mining-proxy.git
