@@ -152,9 +152,13 @@ def test_update():
 
     import urllib2
     log.warning("Checking for updates...")
-    if version.VERSION not in urllib2.urlopen(GIT_URL).read():
-        print_deprecation_warning()
-        return # New version already detected, stop periodic checks
+    try:
+        if version.VERSION not in urllib2.urlopen(GIT_URL).read():
+            print_deprecation_warning()
+            return # New version already detected, stop periodic checks
+    except:
+        log.warning("Check failed.")
+        
     reactor.callLater(3600*24, test_update)
 
 @defer.inlineCallbacks
