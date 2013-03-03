@@ -115,7 +115,7 @@ class StratumProxyService(GenericService):
         return result
             
     @defer.inlineCallbacks
-    def authorize(self, worker_name, worker_password):
+    def authorize(self, worker_name, worker_password, *args):
         if self._f.client == None or not self._f.client.connected:
             yield self._f.on_connect
                         
@@ -123,7 +123,7 @@ class StratumProxyService(GenericService):
         defer.returnValue(result)
     
     @defer.inlineCallbacks
-    def subscribe(self):    
+    def subscribe(self, *args):    
         if self._f.client == None or not self._f.client.connected:
             yield self._f.on_connect
             
@@ -148,7 +148,7 @@ class StratumProxyService(GenericService):
         defer.returnValue(((subs1, subs2),) + (self.extranonce1+tail, extranonce2_size))
             
     @defer.inlineCallbacks
-    def submit(self, worker_name, job_id, extranonce2, ntime, nonce):
+    def submit(self, worker_name, job_id, extranonce2, ntime, nonce, *args):
         if self._f.client == None or not self._f.client.connected:
             raise SubmitException("Upstream not connected")
 
