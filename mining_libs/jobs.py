@@ -77,11 +77,12 @@ class Job(object):
         return r            
         
 class JobRegistry(object):   
-    def __init__(self, f, cmd, no_midstate, real_target):
+    def __init__(self, f, cmd, no_midstate, real_target, use_old_target=False):
         self.f = f
         self.cmd = cmd # execute this command on new block
         self.no_midstate = no_midstate # Indicates if calculate midstate for getwork
         self.real_target = real_target # Indicates if real stratum target will be propagated to miners
+        self.use_old_target = use_old_target # Use 00000000fffffff...f instead of correct 00000000ffffffff...0 target for really old miners
         self.jobs = []        
         self.last_job = None
         self.extranonce1 = None
@@ -203,7 +204,9 @@ class JobRegistry(object):
         result = {'data': block_header,
                 'hash1': hash1}
         
-        if self.real_target:
+        if self.use_old_target:
+            result['target'] = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffff00000000'
+        elif self.real_target:
             result['target'] = self.target_hex
         else:
             result['target'] = self.target1_hex
