@@ -148,12 +148,11 @@ def test_update():
     '''Perform lookup for newer proxy version, on startup and then once a day.
     When new version is found, it starts printing warning message and turned off next checks.'''
  
-    GIT_URL='https://raw.github.com/slush0/stratum-mining-proxy/master/'
-    VERSION_FILE = 'mining_libs/version.py'
+    GIT_URL='https://raw.github.com/slush0/stratum-mining-proxy/master/mining_libs/version.py'
 
     import urllib2
     log.warning("Checking for updates...")
-    if open(VERSION_FILE).read() != urllib2.urlopen(GIT_URL + VERSION_FILE).read():
+    if version.VERSION not in urllib2.urlopen(GIT_URL).read():
         print_deprecation_warning()
         return # New version already detected, stop periodic checks
     reactor.callLater(3600*24, test_update)
