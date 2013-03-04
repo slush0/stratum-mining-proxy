@@ -11,6 +11,9 @@ import utils
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
 
+# This fix py2exe issue with packaging the midstate module
+from midstate import calculateMidstate as __unusedimport
+
 try:
     from midstatec.midstatec import test as midstateTest, midstate as calculateMidstate
     if not midstateTest():
@@ -23,7 +26,7 @@ except ImportError:
         from midstate import calculateMidstate
     except ImportError:
         calculateMidstate = None
-        log.warning("No midstate generator available. Some old miners won't work properly.")
+        log.exception("No midstate generator available. Some old miners won't work properly.")
 
 class Job(object):
     def __init__(self):
