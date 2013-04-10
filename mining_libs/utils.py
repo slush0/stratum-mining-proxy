@@ -19,7 +19,7 @@ def format_hash(h):
     return "%s" % h[:8]
   
 def uint256_from_str(s):
-    r = 0L
+    r = 0
     t = struct.unpack("<IIIIIIII", s[:32])
     for i in xrange(8):
         r += t[i] << (i * 32)
