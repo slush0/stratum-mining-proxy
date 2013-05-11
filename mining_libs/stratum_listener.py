@@ -41,7 +41,8 @@ class MiningSubscription(Subscription):
     @classmethod
     def disconnect_all(cls):
         for subs in Pubsub.iterate_subscribers(cls.event):
-            subs.connection_ref().transport.loseConnection()
+            if subs.connection_ref().transport != None:
+                subs.connection_ref().transport.loseConnection()
         
     @classmethod
     def on_template(cls, job_id, prevhash, coinb1, coinb2, merkle_branch, version, nbits, ntime, clean_jobs):
