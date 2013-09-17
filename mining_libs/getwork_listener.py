@@ -145,6 +145,10 @@ class Root(Resource):
 
         (worker_name, password) = (request.getUser(), request.getPassword())
 
+        if self.custom_user:
+            worker_name = self.custom_user
+            password = self.custom_password
+ 
         if worker_name == '':
             log.warning("Authorization required")
             request.setResponseCode(401)
@@ -154,14 +158,10 @@ class Root(Resource):
         self._prepare_headers(request)
         
         if request.path.startswith('/lp'):
-            log.warning("Worker '%s' subscribed for LP" % worker_name)
+            log.info("Worker '%s' subscribed for LP" % worker_name)
             self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
             return NOT_DONE_YET
-                
-        if self.custom_user:
-            worker_name = self.custom_user
-            password = self.custom_password
-        
+       
         d = defer.maybeDeferred(self.workers.authorize, worker_name, password)
         d.addCallback(self._on_authorized, request, worker_name)
         d.addErrback(self._on_failure, request)    
@@ -175,6 +175,10 @@ class Root(Resource):
         except:
             worker_name = '<unknown>'
                 
-        log.warning("Worker '%s' subscribed for LP at %s" % (worker_name, request.path))
+        if self.custom_user:
+            worker_name = self.custom_user
+            password = self.custom_password                
+                
+        log.info("Worker '%s' subscribed for LP at %s" % (worker_name, request.path))
         self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
         return NOT_DONE_YET
