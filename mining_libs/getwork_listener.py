@@ -151,7 +151,9 @@ class Root(Resource):
             request.setHeader('WWW-Authenticate', 'Basic realm="stratum-mining-proxy"')
             return "Authorization required"
         
-        if request.path == '/lp':
+        self._prepare_headers(request)
+        
+        if request.path.startswith('/lp'):
             log.warning("Worker '%s' subscribed for LP" % worker_name)
             self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
             return NOT_DONE_YET
@@ -174,6 +176,5 @@ class Root(Resource):
             worker_name = '<unknown>'
                 
         log.warning("Worker '%s' subscribed for LP at %s" % (worker_name, request.path))
-            
         self.job_registry.on_block.addCallback(self._on_lp_broadcast, request)
         return NOT_DONE_YET
