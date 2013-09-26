@@ -43,6 +43,7 @@ def parse_args():
     parser.add_argument('-t', '--test', dest='test', action='store_true', help='Run performance test on startup')    
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_true', help='Make output more quiet')
+    parser.add_argument('-l', '--log-file', dest='log_file', type=str, help='Log to specified file')
     parser.add_argument('-i', '--pid-file', dest='pid_file', type=str, help='Store process pid to the file')    
     return parser.parse_args()
 
@@ -59,6 +60,8 @@ if __name__ == '__main__':
     elif args.verbose:
         settings.DEBUG = True
         settings.LOGLEVEL = 'DEBUG'
+    if args.log_file:
+        settings.LOGFILE = args.log_file
             
 from twisted.internet import reactor, defer
 from stratum.socket_transport import SocketTransportFactory, SocketTransportClientFactory
