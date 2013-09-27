@@ -106,7 +106,7 @@ class JobRegistry(object):
 
     def execute_cmd(self, prevhash):
         if self.cmd != '':
-	    return subprocess.Popen(self.cmd.replace('%s', prevhash), shell=True)
+            return subprocess.Popen(self.cmd.replace('%s', prevhash), shell=True)
 
     def set_extranonce(self, extranonce1, extranonce2_size):
         self.extranonce2_size = extranonce2_size
