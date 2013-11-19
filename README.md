@@ -16,7 +16,7 @@ Installation on Linux
 
 1. Download TGZ file from https://github.com/slush0/stratum-mining-proxy/tarball/master
 2. Unpack it by typing "tar xf slush0-stratum-mining_proxy*.tar.gz"
-3. Most likely you already have Python installed on your system. Otherwise install it by "sudo apt-get install python-dev"
+3. Most likely you already have Python respectively OpenSSL installed on your system. Otherwise install it by "sudo apt-get install python-dev libssl-dev"
 (on Ubuntu and Debian).
 3. Type "sudo python setup.py install" in the unpacked directory.
 4. You can start the proxy by typing "./mining_proxy.py" in the terminal window. Using default settings,
