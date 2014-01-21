@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_true', help='Make output more quiet')
     parser.add_argument('-i', '--pid-file', dest='pid_file', type=str, help='Store process pid to the file')
-    parser.add_argument('-s', '--scrypt', dest='scrypt', action='store_true', help='Calculate targets for scrypt algorithm')
+    parser.add_argument('-st', '--scrypt-target', dest='scrypt_target', action='store_true', help='Calculate targets for scrypt algorithm')
     return parser.parse_args()
 
 from stratum import settings
@@ -213,7 +213,7 @@ def main(args):
                 event_handler=client_service.ClientMiningService)
     
     
-    job_registry = jobs.JobRegistry(f, cmd=args.blocknotify_cmd, scrypt=args.scrypt,
+    job_registry = jobs.JobRegistry(f, cmd=args.blocknotify_cmd, scrypt_target=args.scrypt_target,
                    no_midstate=args.no_midstate, real_target=args.real_target, use_old_target=args.old_target)
     client_service.ClientMiningService.job_registry = job_registry
     client_service.ClientMiningService.reset_timeout()
