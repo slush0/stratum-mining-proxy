@@ -80,9 +80,10 @@ class Job(object):
         return r            
         
 class JobRegistry(object):   
-    def __init__(self, f, cmd, no_midstate, real_target, use_old_target=False):
+    def __init__(self, f, cmd, scrypt, no_midstate, real_target, use_old_target=False):
         self.f = f
         self.cmd = cmd # execute this command on new block
+        self.scrypt = scrypt # calculate target for scrypt algorithm instead of sha256
         self.no_midstate = no_midstate # Indicates if calculate midstate for getwork
         self.real_target = real_target # Indicates if real stratum target will be propagated to miners
         self.use_old_target = use_old_target # Use 00000000fffffff...f instead of correct 00000000ffffffff...0 target for really old miners
@@ -112,7 +113,10 @@ class JobRegistry(object):
         self.extranonce1_bin = binascii.unhexlify(extranonce1)
         
     def set_difficulty(self, new_difficulty):
-        dif1 = 0x00000000ffff0000000000000000000000000000000000000000000000000000 
+        if self.scrypt:
+            dif1 = 0x0000ffff00000000000000000000000000000000000000000000000000000000
+        else:
+            dif1 = 0x00000000ffff0000000000000000000000000000000000000000000000000000
         self.target = int(dif1 / new_difficulty)
         self.target_hex = binascii.hexlify(utils.uint256_to_str(self.target))
         self.difficulty = new_difficulty
