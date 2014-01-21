@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''
     Stratum mining proxy
-    Copyright (C) 2012 Marek Palatinus <info@bitcoin.cz>
+    Copyright (C) 2012 Marek Palatinus <slush@satoshilabs.com>
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

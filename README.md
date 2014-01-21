@@ -63,4 +63,4 @@ Contact
 -------
 
 This proxy is provided by Slush's mining pool at http://mining.bitcoin.cz. You can contact the author
-by email info(at)bitcoin.cz or by IRC on irc.freenode.net in channel #stratum.
+by email slush(at)satoshilabs.com.
