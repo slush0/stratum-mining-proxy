@@ -16,7 +16,7 @@ args = {
     'version': version.VERSION,
     'description': 'Getwork-compatible proxy for Stratum mining pools',
     'author': 'slush',
-    'author_email': 'info@bitcion.cz',
+    'author_email': 'slush@satoshilabs.com',
     'url': 'http://mining.bitcoin.cz/stratum-mining/',
     'py_modules': ['mining_libs.client_service', 'mining_libs.getwork_listener',
                    'mining_libs.jobs', 'mining_libs.midstate',

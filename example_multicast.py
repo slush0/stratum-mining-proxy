@@ -4,7 +4,7 @@
     If you're end user, you don't need to use this script.
 
     Detector of Stratum mining proxies on local network
-    Copyright (C) 2012 Marek Palatinus <info@bitcoin.cz>
+    Copyright (C) 2012 Marek Palatinus <slush@satoshilabs.com>
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
