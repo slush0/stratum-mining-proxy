@@ -253,6 +253,7 @@ def main(args):
     # Setup stratum listener
     if args.stratum_port > 0:
         stratum_listener.StratumProxyService._set_upstream_factory(f)
+        stratum_listener.StratumProxyService._set_custom_user(args.custom_user, args.custom_password)
         reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
 
     # Setup multicast responder

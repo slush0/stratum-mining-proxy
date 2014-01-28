@@ -81,6 +81,8 @@ class StratumProxyService(GenericService):
     is_default = True
     
     _f = None # Factory of upstream Stratum connection
+    custom_user = None
+    custom_password = None
     extranonce1 = None
     extranonce2_size = None
     tail_iterator = 0
@@ -89,6 +91,11 @@ class StratumProxyService(GenericService):
     @classmethod
     def _set_upstream_factory(cls, f):
         cls._f = f
+
+    @classmethod
+    def _set_custom_user(cls, custom_user, custom_password):
+        cls.custom_user = custom_user
+        cls.custom_password = custom_password
         
     @classmethod
     def _set_extranonce(cls, extranonce1, extranonce2_size):
@@ -130,6 +137,10 @@ class StratumProxyService(GenericService):
     def authorize(self, worker_name, worker_password, *args):
         if self._f.client == None or not self._f.client.connected:
             yield self._f.on_connect
+
+        if self.custom_user != None:
+            # Already subscribed by main()
+            defer.returnValue(True)
                         
         result = (yield self._f.rpc('mining.authorize', [worker_name, worker_password]))
         defer.returnValue(result)
@@ -168,6 +179,11 @@ class StratumProxyService(GenericService):
         tail = session.get('tail')
         if tail == None:
             raise SubmitException("Connection is not subscribed")
+
+        if self.custom_user:
+            worker_name = self.custom_user
+
+        print "WORKER_NAME", worker_name
         
         start = time.time()
         
