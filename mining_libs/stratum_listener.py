@@ -197,3 +197,7 @@ class StratumProxyService(GenericService):
         response_time = (time.time() - start) * 1000
         log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, DifficultySubscription.difficulty))
         defer.returnValue(result)
+
+    def get_transactions(self, *args):
+        log.warn("mining.get_transactions isn't supported by proxy")
+        return []
