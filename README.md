@@ -64,3 +64,11 @@ Contact
 
 This proxy is provided by Slush's mining pool at http://mining.bitcoin.cz. You can contact the author
 by email slush(at)satoshilabs.com.
+
+Donation
+--------
+This project helps thousands of miners to improve their mining experience and optimize bandwidth of large
+mining operations. Now it is listed on tip4commit service, so if you find this tool handy, feel free
+to throw few satoshis to the basket :-).
+
+[![tip for next commit](http://tip4commit.com/projects/322.svg)](http://tip4commit.com/projects/322)
