@@ -1,0 +1,17 @@
+mining_proxy.py
+setup.py
+mining_libs/__init__.py
+mining_libs/client_service.py
+mining_libs/getwork_listener.py
+mining_libs/jobs.py
+mining_libs/midstate.py
+mining_libs/multicast_responder.py
+mining_libs/stratum_listener.py
+mining_libs/utils.py
+mining_libs/version.py
+mining_libs/worker_registry.py
+stratum_mining_proxy.egg-info/PKG-INFO
+stratum_mining_proxy.egg-info/SOURCES.txt
+stratum_mining_proxy.egg-info/dependency_links.txt
+stratum_mining_proxy.egg-info/requires.txt
+stratum_mining_proxy.egg-info/top_level.txt

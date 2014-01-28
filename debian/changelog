@@ -1,0 +1,11 @@
+stratum-mining-proxy (1.5.2-1.1) unstable; urgency=low
+
+  * Add logrotate config, init and defaults
+
+ -- Corey Ralph <corey@trellian.com>  Wed, 29 Jan 2014 10:44:27 +1100
+
+stratum-mining-proxy (1.5.2-1) unstable; urgency=low
+
+  * source package automatically created by stdeb 0.6.0
+
+ -- Corey Ralph <corey@trellian.com>  Tue, 28 Jan 2014 15:45:25 +1100

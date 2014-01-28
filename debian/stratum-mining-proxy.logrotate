@@ -1,0 +1,12 @@
+/var/log/stratum-mining-proxy.log
+{
+	rotate 7
+	daily
+	missingok
+	notifempty
+	delaycompress
+	compress
+	postrotate
+		invoke-rc.d stratum-mining-proxy restart > /dev/null
+	endscript
+}

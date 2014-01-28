@@ -1,0 +1,4 @@
+setuptools>=0.6c11
+twisted>=12.2.0
+stratum>=0.2.11
+argparse
