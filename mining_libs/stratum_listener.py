@@ -10,6 +10,9 @@ from stratum.custom_exceptions import ServiceException, RemoteServiceException
 
 from jobs import JobRegistry
 
+from share_stats import ShareStats
+sharestats = ShareStats()
+
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
 
@@ -87,6 +90,7 @@ class StratumProxyService(GenericService):
     extranonce2_size = None
     tail_iterator = 0
     registered_tails= []
+    use_sharestats = False
     
     @classmethod
     def _set_upstream_factory(cls, f):
@@ -96,7 +100,14 @@ class StratumProxyService(GenericService):
     def _set_custom_user(cls, custom_user, custom_password):
         cls.custom_user = custom_user
         cls.custom_password = custom_password
-        
+    
+    @classmethod
+    def _set_sharestats_cmd(cls, cmd):
+        if cmd != None and len(cmd) > 1:
+            cls.use_sharestats = True
+            sharestats.setCMD(cmd)
+            log.info("Using sharenotify command %s" %cmd)
+    
     @classmethod
     def _set_extranonce(cls, extranonce1, extranonce2_size):
         cls.extranonce1 = extranonce1
@@ -179,11 +190,13 @@ class StratumProxyService(GenericService):
         tail = session.get('tail')
         if tail == None:
             raise SubmitException("Connection is not subscribed")
-
+        
+        if self.use_sharestats:
+            sharestats.addJob(job_id,worker_name)
+            #print "%s" %sharestats
+            
         if self.custom_user:
             worker_name = self.custom_user
-
-        print "WORKER_NAME", worker_name
         
         start = time.time()
         
@@ -192,12 +205,14 @@ class StratumProxyService(GenericService):
         except RemoteServiceException as exc:
             response_time = (time.time() - start) * 1000
             log.info("[%dms] Share from '%s' REJECTED: %s" % (response_time, worker_name, str(exc)))
+            if self.use_sharestats: sharestats.delJob(job_id)
             raise SubmitException(*exc.args)
 
         response_time = (time.time() - start) * 1000
         log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, DifficultySubscription.difficulty))
+        if self.use_sharestats: sharestats.registerJob(job_id,DifficultySubscription.difficulty)
         defer.returnValue(result)
-
+        
     def get_transactions(self, *args):
         log.warn("mining.get_transactions isn't supported by proxy")
         return []
