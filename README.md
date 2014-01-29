@@ -16,7 +16,7 @@ Installation on Linux
 
 1. Download TGZ file from https://github.com/slush0/stratum-mining-proxy/tarball/master
 2. Unpack it by typing "tar xf slush0-stratum-mining_proxy*.tar.gz"
-3. Most likely you already have Python installed on your system. Otherwise install it by "sudo apt-get install python-dev"
+3. Most likely you already have Python respectively OpenSSL installed on your system. Otherwise install it by "sudo apt-get install python-dev libssl-dev"
 (on Ubuntu and Debian).
 3. Type "sudo python setup.py install" in the unpacked directory.
 4. You can start the proxy by typing "./mining_proxy.py" in the terminal window. Using default settings,
@@ -64,3 +64,11 @@ Contact
 
 This proxy is provided by Slush's mining pool at http://mining.bitcoin.cz. You can contact the author
 by email slush(at)satoshilabs.com.
+
+Donation
+--------
+This project helps thousands of miners to improve their mining experience and optimize bandwidth of large
+mining operations. Now it is listed on tip4commit service, so if you find this tool handy, feel free
+to throw few satoshis to the basket :-).
+
+[![tip for next commit](http://tip4commit.com/projects/322.svg)](http://tip4commit.com/projects/322)
