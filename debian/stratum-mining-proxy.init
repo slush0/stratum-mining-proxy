@@ -29,8 +29,11 @@ SCRIPTNAME=/etc/init.d/$NAME
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
+# Add settings from default file to $DAEMON_ARGS
 [ -n "$POOL_HOST" ] && DAEMON_ARGS="$DAEMON_ARGS -o $POOL_HOST"
 [ -n "$POOL_PORT" ] && DAEMON_ARGS="$DAEMON_ARGS -p $POOL_PORT"
+[ -n "$SCRYPT_TARGET" ] && DAEMON_ARGS="$DAEMON_ARGS -st"
+[ -n "$CUSTOM_USER" ] && DAEMON_ARGS="$DAEMON_ARGS -cu $CUSTOM_USER"
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh

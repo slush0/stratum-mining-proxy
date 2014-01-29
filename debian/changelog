@@ -1,3 +1,9 @@
+stratum-mining-proxy (1.5.2-3) unstable; urgency=low
+
+  * Add CUSTOM_USER and SCRYPT_TARGET options in default file
+
+ -- Corey Ralph <corey@trellian.com>  Wed, 29 Jan 2014 15:16:18 +1100
+
 stratum-mining-proxy (1.5.2-2) unstable; urgency=low
 
   * Add dependency on python-argparse
