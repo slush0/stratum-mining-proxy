@@ -8,7 +8,7 @@ XS-Python-Version: current
 
 Package: stratum-mining-proxy
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-stratum, python-twisted-web, python-ecdsa
+Depends: ${misc:Depends}, ${python:Depends}, python-stratum, python-twisted-web, python-ecdsa, python-argparse
 XB-Python-Version: ${python:Versions}
 Provides: ${python:Provides}
 Description: Getwork-compatible proxy for Stratum mining pools
