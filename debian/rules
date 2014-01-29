@@ -27,3 +27,4 @@ override_dh_clean:
 	dh_clean
 	# distribute module is downloaded during build
 	rm -f distribute-*.egg distribute-*.tar.gz
+	rm -rf stratum_mining_proxy.egg-info
