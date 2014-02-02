@@ -97,17 +97,17 @@ def on_connect(f, workers, job_registry):
     
     # Every worker have to re-autorize
     workers.clear_authorizations() 
-    
-    if args.custom_user:
-        log.warning("Authorizing custom user %s, password %s" % (args.custom_user, args.custom_password))
-        workers.authorize(args.custom_user, args.custom_password)
-        
+       
     # Subscribe for receiving jobs
     log.info("Subscribing for mining jobs")
     (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))[:3]
     job_registry.set_extranonce(extranonce1, extranonce2_size)
     stratum_listener.StratumProxyService._set_extranonce(extranonce1, extranonce2_size)
     
+    if args.custom_user:
+        log.warning("Authorizing custom user %s, password %s" % (args.custom_user, args.custom_password))
+        workers.authorize(args.custom_user, args.custom_password)
+
     defer.returnValue(f)
      
 def on_disconnect(f, workers, job_registry):
