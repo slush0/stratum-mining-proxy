@@ -22,7 +22,7 @@ args = {
                    'mining_libs.jobs', 'mining_libs.midstate',
                    'mining_libs.multicast_responder', 'mining_libs.stratum_listener',
                    'mining_libs.utils', 'mining_libs.version', 'mining_libs.worker_registry'],
-    'install_requires': ['setuptools>=0.6c11', 'twisted>=12.2.0', 'stratum>=0.2.11', 'argparse'],
+    'install_requires': ['setuptools>=0.6c11', 'twisted>=12.2.0', 'stratum>=0.2.14', 'argparse'],
     'scripts': ['mining_proxy.py'],
 }
 
