@@ -1,3 +1,9 @@
+stratum-mining-proxy (1.5.6-1) unstable; urgency=low
+
+  * Add CUSTOM_USER and SCRYPT_TARGET options in default file
+
+ -- Marek Palatinus <slush@satoshilabs.com>  Sun, 9 Feb 2014 18:36:00 +0000
+
 stratum-mining-proxy (1.5.2-3) unstable; urgency=low
 
   * Add CUSTOM_USER and SCRYPT_TARGET options in default file
