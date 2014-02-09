@@ -1,0 +1,16 @@
+#!/bin/sh
+# Automatically added by dh_pysupport
+if which update-python-modules >/dev/null 2>&1; then
+	update-python-modules  stratum-mining-proxy.public
+fi
+# End automatically added section
+# Automatically added by dh_installinit
+if [ -x "/etc/init.d/stratum-mining-proxy" ]; then
+	update-rc.d stratum-mining-proxy defaults >/dev/null
+	if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+		invoke-rc.d stratum-mining-proxy start || exit $?
+	else
+		/etc/init.d/stratum-mining-proxy start || exit $?
+	fi
+fi
+# End automatically added section

@@ -1,0 +1,15 @@
+Source: stratum-mining-proxy
+Maintainer: Corey Ralph <corey@trellian.com>
+Section: python
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), debhelper (>= 7), python-support (>= 0.8.4)
+Standards-Version: 3.8.4
+XS-Python-Version: current
+
+Package: stratum-mining-proxy
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, python-stratum, python-twisted-web, python-ecdsa, python-argparse
+XB-Python-Version: ${python:Versions}
+Provides: ${python:Provides}
+Description: Getwork-compatible proxy for Stratum mining pools
+

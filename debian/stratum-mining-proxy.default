@@ -1,0 +1,4 @@
+#POOL_HOST=stratum.bitcoin.cz
+#POOL_PORT=3333
+#SCRYPT_TARGET=1
+#CUSTOM_USER=...
