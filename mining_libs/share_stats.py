@@ -23,22 +23,22 @@ class ShareStats(object):
           def do_nothing(job_id, worker_name, init_time, dif): pass
           self.on_share = do_nothing
  
-    def resetJobs(self):
+    def reset_jobs(self):
         self.shares = {}
 
-    def addJob(self, job_id, worker_name):
+    def add_job(self, job_id, worker_name):
         if not job_id in self.shares:
             self.shares[job_id] = [worker_name,time.time()]
 
-    def registerJob(self,job_id,dif):
+    def register_job(self,job_id,dif):
         if job_id in self.shares:
             job = self.shares[job_id]
-            self._execute_cmd(job_id,job[0],job[1],dif)
-            self.delJob(job_id)
+            self._execute_snippet(job_id,job[0],job[1],dif)
+            self.del_job(job_id)
             return True
         else: return False
 
-    def delJob(self,job_id):
+    def del_job(self,job_id):
         try:
             del self.shares[job_id]
             return True
@@ -46,20 +46,20 @@ class ShareStats(object):
             pass
             return False
         
-    def listJobs(self):
+    def list_jobs(self):
         return self.shares.keys()
 
-    def getWorker(self,job_id):
+    def get_worker(self,job_id):
         return self.shares[job_id][0]
 
-    def getJobByWorker(self,worker_name):
+    def get_job_by_worker(self,worker_name):
         jobs = []
         for job in self.shares.keys():
             if self.shares.keys[job][0] == worker_name:
                 jobs.append(self.shares.keys[job][0])
         return jobs
     
-    def cleanJobs(self):
+    def clean_jobs(self):
         current_time = time.time()
         for job in self.shares.keys():
             if current_time - self.shares.keys()[job][1] > max_job_time:
@@ -68,7 +68,6 @@ class ShareStats(object):
     def __str__(self):
         return self.shares.__str__()
     
-    def _execute_cmd(self, job_id, worker_name, init_time, dif):
+    def _execute_snippet(self, job_id, worker_name, init_time, dif):
         self.on_share(job_id, worker_name, init_time, dif)
 
-        

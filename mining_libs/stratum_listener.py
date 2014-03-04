@@ -191,7 +191,7 @@ class StratumProxyService(GenericService):
             raise SubmitException("Connection is not subscribed")
         
         if self.use_sharestats:
-            sharestats.addJob(job_id,worker_name)
+            sharestats.add_job(job_id,worker_name)
             
         if self.custom_user:
             worker_name = self.custom_user
@@ -203,12 +203,12 @@ class StratumProxyService(GenericService):
         except RemoteServiceException as exc:
             response_time = (time.time() - start) * 1000
             log.info("[%dms] Share from '%s' REJECTED: %s" % (response_time, worker_name, str(exc)))
-            if self.use_sharestats: sharestats.delJob(job_id)
+            if self.use_sharestats: sharestats.del_job(job_id)
             raise SubmitException(*exc.args)
 
         response_time = (time.time() - start) * 1000
         log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, DifficultySubscription.difficulty))
-        if self.use_sharestats: sharestats.registerJob(job_id,DifficultySubscription.difficulty)
+        if self.use_sharestats: sharestats.register_job(job_id,DifficultySubscription.difficulty)
         defer.returnValue(result)
         
     def get_transactions(self, *args):
