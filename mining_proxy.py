@@ -98,17 +98,17 @@ def on_connect(f, workers, job_registry):
     
     # Every worker have to re-autorize
     workers.clear_authorizations() 
-    
-    if args.custom_user:
-        log.warning("Authorizing custom user %s, password %s" % (args.custom_user, args.custom_password))
-        workers.authorize(args.custom_user, args.custom_password)
-        
+       
     # Subscribe for receiving jobs
     log.info("Subscribing for mining jobs")
     (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))[:3]
     job_registry.set_extranonce(extranonce1, extranonce2_size)
     stratum_listener.StratumProxyService._set_extranonce(extranonce1, extranonce2_size)
     
+    if args.custom_user:
+        log.warning("Authorizing custom user %s, password %s" % (args.custom_user, args.custom_password))
+        workers.authorize(args.custom_user, args.custom_password)
+
     defer.returnValue(f)
      
 def on_disconnect(f, workers, job_registry):
@@ -256,7 +256,7 @@ def main(args):
         stratum_listener.StratumProxyService._set_upstream_factory(f)
         stratum_listener.StratumProxyService._set_custom_user(args.custom_user, args.custom_password)
         stratum_listener.StratumProxyService._set_sharestats_cmd(args.sharestats_cmd)
-        reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler))
+        reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler), interface=args.stratum_host)
 
     # Setup multicast responder
     reactor.listenMulticast(3333, multicast_responder.MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)

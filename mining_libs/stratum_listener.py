@@ -197,7 +197,7 @@ class StratumProxyService(GenericService):
             
         if self.custom_user:
             worker_name = self.custom_user
-        
+
         start = time.time()
         
         try:
