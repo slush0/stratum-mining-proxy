@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument('-cp', '--custom-password', dest='custom_password', type=str, help='Use this password for submitting shares')
     parser.add_argument('--old-target', dest='old_target', action='store_true', help='Provides backward compatible targets for some deprecated getwork miners.')    
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
-    parser.add_argument('--sharenotify', dest='sharestats_cmd', type=str, default=None, help='Execute command when a share is accepted (%%w=worker_name %%j=job_id %%t=init_time %%d=difficulty are replaced in the command)')
+    parser.add_argument('--sharenotify', dest='sharestats_module', type=str, default=None, help='Execute a python snippet when a share is accepted. Use absolute path (i.e /root/snippets/log.py)')
     parser.add_argument('--socks', dest='proxy', type=str, default='', help='Use socks5 proxy for upstream Stratum connection, specify as host:port')
     parser.add_argument('--tor', dest='tor', action='store_true', help='Configure proxy to mine over Tor (requires Tor running on local machine)')
     parser.add_argument('-t', '--test', dest='test', action='store_true', help='Run performance test on startup')    
@@ -255,7 +255,7 @@ def main(args):
     if args.stratum_port > 0:
         stratum_listener.StratumProxyService._set_upstream_factory(f)
         stratum_listener.StratumProxyService._set_custom_user(args.custom_user, args.custom_password)
-        stratum_listener.StratumProxyService._set_sharestats_cmd(args.sharestats_cmd)
+        stratum_listener.StratumProxyService._set_sharestats_module(args.sharestats_module)
         reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler), interface=args.stratum_host)
 
     # Setup multicast responder

@@ -102,11 +102,10 @@ class StratumProxyService(GenericService):
         cls.custom_password = custom_password
     
     @classmethod
-    def _set_sharestats_cmd(cls, cmd):
-        if cmd != None and len(cmd) > 1:
+    def _set_sharestats_module(cls, module):
+        if module != None and len(module) > 1:
             cls.use_sharestats = True
-            sharestats.setCMD(cmd)
-            log.info("Using sharenotify command %s" %cmd)
+            sharestats.set_module(module)
     
     @classmethod
     def _set_extranonce(cls, extranonce1, extranonce2_size):
@@ -193,7 +192,6 @@ class StratumProxyService(GenericService):
         
         if self.use_sharestats:
             sharestats.addJob(job_id,worker_name)
-            #print "%s" %sharestats
             
         if self.custom_user:
             worker_name = self.custom_user

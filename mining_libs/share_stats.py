@@ -1,19 +1,28 @@
 import time
 import stratum.logger
 import subprocess
-
 log = stratum.logger.get_logger('proxy')
 
-class ShareStats(object):
+class ShareStats(object):	
     max_job_time = 600
     
-    def __init__(self,register_cmd='echo [%t] %w %j/%d >> /tmp/sharestats.log'):
+    def __init__(self):
         self.shares = {}
-        self.register_cmd = register_cmd
-    
-    def setCMD(self,cmd):
-        self.register_cmd = cmd
-    
+
+    def set_module(self,module):
+        try:
+          mod_fd = open("%s" %(module),'r')
+          mod_str = mod_fd.read()
+          mod_fd.close()
+          exec(mod_str)
+          self.on_share = on_share
+          log.info('Loaded sharenotify module %s' %module)
+
+        except IOError:
+          log.error('Cannot load sharenotify snippet')
+          def do_nothing(job_id, worker_name, init_time, dif): pass
+          self.on_share = do_nothing
+ 
     def resetJobs(self):
         self.shares = {}
 
@@ -59,13 +68,7 @@ class ShareStats(object):
     def __str__(self):
         return self.shares.__str__()
     
-    def _execute_cmd(self, job_id, worker_name, init_time,dif):
-        if self.register_cmd:
-            cmd = self.register_cmd.replace('%j', job_id)
-            cmd = cmd.replace('%w', worker_name)
-            cmd = cmd.replace('%t', str(init_time))
-            cmd = cmd.replace('%d', str(dif))
-            log.info("Executing sharenotify command: %s" %cmd)
-            subprocess.Popen(cmd, shell=True)
-        
+    def _execute_cmd(self, job_id, worker_name, init_time, dif):
+        self.on_share(job_id, worker_name, init_time, dif)
+
         
