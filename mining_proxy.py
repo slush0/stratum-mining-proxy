@@ -36,6 +36,7 @@ def parse_args():
     parser.add_argument('-cs', '--custom-stratum', dest='custom_stratum', type=str, help='Override URL provided in X-Stratum header')
     parser.add_argument('-cu', '--custom-user', dest='custom_user', type=str, help='Use this username for submitting shares')
     parser.add_argument('-cp', '--custom-password', dest='custom_password', type=str, help='Use this password for submitting shares')
+    parser.add_argument('--idle', dest='set_idle', action='store_true', help='Close listening stratum ports in case connection with pool is lost (recover it later if success)')
     parser.add_argument('--old-target', dest='old_target', action='store_true', help='Provides backward compatible targets for some deprecated getwork miners.')    
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
     parser.add_argument('--sharenotify', dest='sharestats_module', type=str, default=None, help='Execute a python snippet when a share is accepted. Use absolute path (i.e /root/snippets/log.py)')
@@ -51,6 +52,7 @@ def parse_args():
 
 from stratum import settings
 settings.LOGLEVEL='INFO'
+IDLE=None
 
 if __name__ == '__main__':
     # We need to parse args & setup Stratum environment
@@ -64,6 +66,8 @@ if __name__ == '__main__':
         settings.LOGLEVEL = 'DEBUG'
     if args.log_file:
         settings.LOGFILE = args.log_file
+    if args.set_idle:
+        IDLE=False
             
 from twisted.internet import reactor, defer
 from stratum.socket_transport import SocketTransportFactory, SocketTransportClientFactory
@@ -90,9 +94,14 @@ def on_shutdown(f):
 @defer.inlineCallbacks
 def on_connect(f, workers, job_registry):
     '''Callback when proxy get connected to the pool'''
+    global IDLE
     log.info("Connected to Stratum pool at %s:%d" % f.main_host)
     #reactor.callLater(30, f.client.transport.loseConnection)
-    
+    if IDLE != None and IDLE:
+        log.info("Found proxy in IDLE state, opening stratum server")
+        IDLE=False
+        reactor_listen.startListening()
+
     # Hook to on_connect again
     f.on_connect.addCallback(on_connect, workers, job_registry)
     
@@ -113,6 +122,7 @@ def on_connect(f, workers, job_registry):
      
 def on_disconnect(f, workers, job_registry):
     '''Callback when proxy get disconnected from the pool'''
+    global IDLE
     log.info("Disconnected from Stratum pool at %s:%d" % f.main_host)
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
     
@@ -120,7 +130,10 @@ def on_disconnect(f, workers, job_registry):
     
     # Reject miners because we don't give a *job :-)
     workers.clear_authorizations() 
-    
+    if IDLE != None:
+        log.info("Entering in IDLE state")
+        reactor_listen.stopListening()
+        IDLE=True
     return f              
 
 def test_launcher(result, job_registry):
@@ -169,6 +182,7 @@ def test_update():
 
 @defer.inlineCallbacks
 def main(args):
+    global reactor_listen
     if args.pid_file:
         fp = file(args.pid_file, 'w')
         fp.write(str(os.getpid()))
@@ -256,7 +270,7 @@ def main(args):
         stratum_listener.StratumProxyService._set_upstream_factory(f)
         stratum_listener.StratumProxyService._set_custom_user(args.custom_user, args.custom_password)
         stratum_listener.StratumProxyService._set_sharestats_module(args.sharestats_module)
-        reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler), interface=args.stratum_host)
+        reactor_listen = reactor.listenTCP(args.stratum_port, SocketTransportFactory(debug=False, event_handler=ServiceEventHandler), interface=args.stratum_host)
 
     # Setup multicast responder
     reactor.listenMulticast(3333, multicast_responder.MulticastResponder((args.host, args.port), args.stratum_port, args.getwork_port), listenMultiple=True)
