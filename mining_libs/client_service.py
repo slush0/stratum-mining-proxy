@@ -80,14 +80,19 @@ class ClientMiningService(GenericEventHandler):
             self.job_registry.set_difficulty(difficulty)
                     
         elif method == 'client.reconnect':
-            (hostname, port, wait) = params[:3]
+            try:
+                (hostname, port, wait) = params[:3]
+            except:
+                log.error("Pool send client.reconnect, but params are not correct, skipping it...")
+                hostname = False
+                port = False
+                wait = False
             new = list(self.job_registry.f.main_host[::])
-            if hostname: new[0] = hostname
-            if port: new[1] = port
-
+            if hostname and len(hostname) > 6: new[0] = hostname
+            if port and port > 2: new[1] = port
             log.info("Server asked us to reconnect to %s:%d" % tuple(new))
             self.job_registry.f.reconnect(new[0], new[1], wait)
-            
+        
         elif method == 'client.add_peers':
             '''New peers which can be used on connection failure'''
             return False
