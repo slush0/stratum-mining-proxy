@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument('-oh', '--getwork-host', dest='getwork_host', type=str, default='0.0.0.0', help='On which network interface listen for getwork miners. Use "localhost" for listening on internal IP only.')
     parser.add_argument('-gp', '--getwork-port', dest='getwork_port', type=int, default=8332, help='Port on which port listen for getwork miners. Use another port if you have bitcoind RPC running on this machine already.')
     parser.add_argument('-nm', '--no-midstate', dest='no_midstate', action='store_true', help="Don't compute midstate for getwork. This has outstanding performance boost, but some old miners like Diablo don't work without midstate.")
+    parser.add_argument('-b', '--backup', dest='backup_pool', type=str, default=False, help='Stratum mining pool used as backup in format host:port.')
     parser.add_argument('-rt', '--real-target', dest='real_target', action='store_true', help="Propagate >diff1 target to getwork miners. Some miners work incorrectly with higher difficulty.")
     parser.add_argument('-cl', '--custom-lp', dest='custom_lp', type=str, help='Override URL provided in X-Long-Polling header')
     parser.add_argument('-cs', '--custom-stratum', dest='custom_stratum', type=str, help='Override URL provided in X-Stratum header')
@@ -52,11 +53,11 @@ def parse_args():
 
 from stratum import settings
 settings.LOGLEVEL='INFO'
-IDLE=None
 
 if __name__ == '__main__':
     # We need to parse args & setup Stratum environment
     # before any other imports
+    global IDLE, backup_pool, original_pool
     args = parse_args()
     if args.quiet:
         settings.DEBUG = False
@@ -68,7 +69,11 @@ if __name__ == '__main__':
         settings.LOGFILE = args.log_file
     if args.set_idle:
         IDLE=False
-            
+
+    backup_pool = args.backup_pool
+    original_pool = "%s:%s" %(args.host,args.port)
+    IDLE=None
+    
 from twisted.internet import reactor, defer
 from stratum.socket_transport import SocketTransportFactory, SocketTransportClientFactory
 from stratum.services import ServiceEventHandler
@@ -122,19 +127,30 @@ def on_connect(f, workers, job_registry):
      
 def on_disconnect(f, workers, job_registry):
     '''Callback when proxy get disconnected from the pool'''
-    global IDLE
+    global IDLE, backup_pool, original_pool
     log.info("Disconnected from Stratum pool at %s:%d" % f.main_host)
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
     
     stratum_listener.MiningSubscription.disconnect_all()
     
     # Reject miners because we don't give a *job :-)
-    workers.clear_authorizations() 
+    workers.clear_authorizations()
+    
     if IDLE != None:
         log.info("Entering in IDLE state")
         reactor_listen.stopListening()
         IDLE=True
-    return f              
+    
+    if backup_pool:
+        host = backup_pool.split(':')[0]
+        port = int(backup_pool.split(':')[1])
+        log.info("Backup pool configured, trying to stablish connection with %s" %backup_pool)
+        f.reconnect(host=host,port=port)
+        aux_pool = backup_pool
+        backup_pool = original_pool
+        original_pool = aux_pool
+
+    return f
 
 def test_launcher(result, job_registry):
     def run_test():
