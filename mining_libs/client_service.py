@@ -13,14 +13,41 @@ log = stratum.logger.get_logger('proxy')
 class ClientMiningService(GenericEventHandler):
     job_registry = None # Reference to JobRegistry instance
     timeout = None # Reference to IReactorTime object
+    cf_counter = 0
+    cf_path = None
+    cf_notif = 10
+    controlled_disconnect = False
     
+    @classmethod
+    def check_control_file(cls):
+        if cls.cf_path != None and cls.cf_counter > cls.cf_notif:
+            cls.cf_counter = 0
+            log.info("Checking control file")
+            try:
+                with open(cls.cf_path,'r') as cf:
+                    data = cf.read()
+                    host = data.split(':')[0].strip()
+                    port = int(data.split(':')[1].strip())
+                new = list(cls.job_registry.f.main_host[::])
+                log.info("Current pool is %s:%d" % tuple(new))
+                if new[0] != host or new[1] != port:
+                    new[0] = host
+                    new[1] = port
+                    log.info("Found new pool configuration on host control file, reconnecting to %s:%d" % tuple(new))
+                    cls.controlled_disconnect = True
+                    cls.job_registry.f.reconnect(new[0], new[1], None)
+            except:
+                log.error("Cannot open or read control file %s, keeping current pool configuration" % cls.cf_path)
+        elif cls.cf_path != None:
+            cls.cf_counter += 1
+
     @classmethod
     def reset_timeout(cls):
         if cls.timeout != None:
             if not cls.timeout.called:
                 cls.timeout.cancel()
             cls.timeout = None
-            
+        cls.check_control_file()
         cls.timeout = reactor.callLater(2*60, cls.on_timeout)
 
     @classmethod

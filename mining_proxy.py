@@ -37,6 +37,8 @@ def parse_args():
     parser.add_argument('-cs', '--custom-stratum', dest='custom_stratum', type=str, help='Override URL provided in X-Stratum header')
     parser.add_argument('-cu', '--custom-user', dest='custom_user', type=str, help='Use this username for submitting shares')
     parser.add_argument('-cp', '--custom-password', dest='custom_password', type=str, help='Use this password for submitting shares')
+    parser.add_argument('-cf', '--control-file', dest='cf_path', type=str, default=None, help='Control file path. If set proxy will check periodically for the contents of this file, if a new destination pool is specified in format pool:port, proxy will switch to this new pool.')
+    parser.add_argument('--cf-interval', dest='cf_notif', type=int, default=10, help='Control file check interval (in pool notifications number). Low one implies more filesystem I/O and delays.')
     parser.add_argument('--idle', dest='set_idle', action='store_true', help='Close listening stratum ports in case connection with pool is lost (recover it later if success)')
     parser.add_argument('--old-target', dest='old_target', action='store_true', help='Provides backward compatible targets for some deprecated getwork miners.')    
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
@@ -124,7 +126,7 @@ def on_connect(f, workers, job_registry):
         workers.authorize(args.custom_user, args.custom_password)
 
     defer.returnValue(f)
-     
+
 def on_disconnect(f, workers, job_registry):
     '''Callback when proxy get disconnected from the pool'''
     global IDLE, backup_pool, original_pool
@@ -136,12 +138,12 @@ def on_disconnect(f, workers, job_registry):
     # Reject miners because we don't give a *job :-)
     workers.clear_authorizations()
     
-    if IDLE != None:
+    if not f.event_handler.controlled_disconnect and IDLE != None:
         log.info("Entering in IDLE state")
         reactor_listen.stopListening()
         IDLE=True
-    
-    if backup_pool:
+
+    if not f.event_handler.controlled_disconnect and backup_pool:
         host = backup_pool.split(':')[0]
         port = int(backup_pool.split(':')[1])
         log.info("Backup pool configured, trying to stablish connection with %s" %backup_pool)
@@ -149,6 +151,8 @@ def on_disconnect(f, workers, job_registry):
         aux_pool = backup_pool
         backup_pool = original_pool
         original_pool = aux_pool
+
+    f.event_handler.controlled_disconnect = False
 
     return f
 
@@ -251,7 +255,11 @@ def main(args):
                    no_midstate=args.no_midstate, real_target=args.real_target, use_old_target=args.old_target)
     client_service.ClientMiningService.job_registry = job_registry
     client_service.ClientMiningService.reset_timeout()
-    
+    if args.cf_path != None:
+        log.info("Using pool control file %s" %args.cf_path)
+    client_service.ClientMiningService.cf_path = args.cf_path
+    client_service.ClientMiningService.cf_notif = args.cf_notif
+
     workers = worker_registry.WorkerRegistry(f)
     f.on_connect.addCallback(on_connect, workers, job_registry)
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
