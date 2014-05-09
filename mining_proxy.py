@@ -114,7 +114,7 @@ def on_connect(f, workers, job_registry):
     
     # Every worker have to re-autorize
     workers.clear_authorizations() 
-       
+
     # Subscribe for receiving jobs
     log.info("Subscribing for mining jobs")
     (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))[:3]
@@ -122,21 +122,27 @@ def on_connect(f, workers, job_registry):
     stratum_listener.StratumProxyService._set_extranonce(extranonce1, extranonce2_size)
     
     if args.custom_user:
-        log.warning("Authorizing custom user %s, password %s" % (args.custom_user, args.custom_password))
-        workers.authorize(args.custom_user, args.custom_password)
-
+        if f.event_handler.new_custom_auth:
+            user,password = f.event_handler.new_custom_auth
+        else:
+            user = args.custom_user
+            password = args.custom_password
+        log.warning("Authorizing custom user %s, password %s" % (user, password))
+        workers.authorize(user, password)
+        stratum_listener.StratumProxyService._set_custom_user(user, password)
+    
     defer.returnValue(f)
 
 def on_disconnect(f, workers, job_registry):
     '''Callback when proxy get disconnected from the pool'''
     global IDLE, backup_pool, original_pool
-    log.info("Disconnected from Stratum pool at %s:%d" % f.main_host)
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
-    
-    stratum_listener.MiningSubscription.disconnect_all()
-    
-    # Reject miners because we don't give a *job :-)
-    workers.clear_authorizations()
+
+    if not f.event_handler.controlled_disconnect:
+        log.info("Disconnected from Stratum pool at %s:%d" % f.main_host)
+        stratum_listener.MiningSubscription.disconnect_all()
+        # Reject miners because we don't give a *job :-)
+        workers.clear_authorizations()
     
     if not f.event_handler.controlled_disconnect and IDLE != None:
         log.info("Entering in IDLE state")
@@ -152,7 +158,10 @@ def on_disconnect(f, workers, job_registry):
         backup_pool = original_pool
         original_pool = aux_pool
 
-    f.event_handler.controlled_disconnect = False
+    if f.event_handler.controlled_disconnect:
+        log.info("Sending reconnect order to workers")
+        stratum_listener.MiningSubscription.reconnect_all()
+        f.event_handler.controlled_disconnect = False
 
     return f
 
@@ -263,6 +272,7 @@ def main(args):
     workers = worker_registry.WorkerRegistry(f)
     f.on_connect.addCallback(on_connect, workers, job_registry)
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
+
 
     if args.test:
         f.on_connect.addCallback(test_launcher, job_registry)

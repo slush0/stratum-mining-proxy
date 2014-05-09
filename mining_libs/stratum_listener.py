@@ -54,7 +54,13 @@ class MiningSubscription(Subscription):
         for subs in Pubsub.iterate_subscribers(cls.event):
             if subs.connection_ref().transport != None:
                 subs.connection_ref().transport.loseConnection()
-        
+
+    @classmethod
+    def reconnect_all(cls):
+        for subs in Pubsub.iterate_subscribers(cls.event):
+            if subs.connection_ref().transport != None:
+                subs.connection_ref().transport.loseConnection()
+
     @classmethod
     def on_template(cls, job_id, prevhash, coinb1, coinb2, merkle_branch, version, nbits, ntime, clean_jobs):
         '''Push new job to subscribed clients'''

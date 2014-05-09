@@ -17,25 +17,33 @@ class ClientMiningService(GenericEventHandler):
     cf_path = None
     cf_notif = 10
     controlled_disconnect = False
+    new_custom_auth = False
     
     @classmethod
     def check_control_file(cls):
+        # Contorl file syntax is: <pool:port> [user:pass]
+        # Example: mypool.com:3333 user.1:foo
         if cls.cf_path != None and cls.cf_counter > cls.cf_notif:
             cls.cf_counter = 0
             log.info("Checking control file")
             try:
                 with open(cls.cf_path,'r') as cf:
                     data = cf.read()
-                    host = data.split(':')[0].strip()
-                    port = int(data.split(':')[1].strip())
+                    sdata = data.strip().split(' ')
+                    host = sdata[0].split(':')[0]
+                    port = int(sdata[0].split(':')[1])
+                    if len(sdata) > 1:
+                        cls.new_custom_auth = (sdata[1].split(':')[0],sdata[1].split(':')[1])
                 new = list(cls.job_registry.f.main_host[::])
                 log.info("Current pool is %s:%d" % tuple(new))
                 if new[0] != host or new[1] != port:
                     new[0] = host
                     new[1] = port
                     log.info("Found new pool configuration on host control file, reconnecting to %s:%d" % tuple(new))
+                    log.info("New custom authorization data found %s:%s" %cls.new_custom_auth)
                     cls.controlled_disconnect = True
                     cls.job_registry.f.reconnect(new[0], new[1], None)
+
             except:
                 log.error("Cannot open or read control file %s, keeping current pool configuration" % cls.cf_path)
         elif cls.cf_path != None:
