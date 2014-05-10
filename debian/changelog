@@ -1,3 +1,9 @@
+stratum-mining-proxy (1.5.7-1) unstable; urgency=low
+
+  * Make midstatec module installable in debian.
+
+ -- Jacek Krysztofik <jacek.krysztofik@infinite.pl>  Fri, 9 May 2014 23:59:59 +0200
+
 stratum-mining-proxy (1.5.6-1) unstable; urgency=low
 
   * Add CUSTOM_USER and SCRYPT_TARGET options in default file
