@@ -32,11 +32,20 @@ class ClientMiningService(GenericEventHandler):
                     sdata = data.strip().split(' ')
                     host = sdata[0].split(':')[0]
                     port = int(sdata[0].split(':')[1])
+                    new_user_pass = False
                     if len(sdata) > 1:
-                        cls.new_custom_auth = (sdata[1].split(':')[0],sdata[1].split(':')[1])
+                        user = sdata[1].split(':')[0]
+                        passw =  sdata[1].split(':')[1]
+                        if cls.new_custom_auth:
+                            if user != cls.new_custom_auth[0] or passw != cls.new_custom_auth[1]:
+                                cls.new_custom_auth = (user,passw)
+                                new_user_pass = True
+                        else:
+                            cls.new_custom_auth = (user,passw)
+                            new_user_pass = True
                 new = list(cls.job_registry.f.main_host[::])
                 log.info("Current pool is %s:%d" % tuple(new))
-                if new[0] != host or new[1] != port:
+                if new_user_pass or new[0] != host or new[1] != port:
                     new[0] = host
                     new[1] = port
                     log.info("Found new pool configuration on host control file, reconnecting to %s:%d" % tuple(new))
@@ -126,6 +135,7 @@ class ClientMiningService(GenericEventHandler):
             if hostname and len(hostname) > 6: new[0] = hostname
             if port and port > 2: new[1] = port
             log.info("Server asked us to reconnect to %s:%d" % tuple(new))
+            self.controlled_disconnect = True
             self.job_registry.f.reconnect(new[0], new[1], wait)
         
         elif method == 'client.add_peers':
