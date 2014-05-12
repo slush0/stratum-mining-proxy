@@ -5,9 +5,27 @@ log = stratum.logger.get_logger('proxy')
 
 class ShareStats(object):	
     max_job_time = 600
-    
+    accepted_jobs = 0
+    rejected_jobs = 0
+    accepted_ratio = 0
+    rejected_ratio = 0
+
     def __init__(self):
         self.shares = {}
+
+    def print_stats(self):
+        # Calculate and print job statistics
+        total_jobs = self.rejected_jobs+self.accepted_jobs
+        if total_jobs > 0 and (total_jobs)%10 == 0:
+            self.rejected_ratio = self.rejected_jobs / total_jobs
+            self.accepted_ratio = self.accepted_jobs / total_jobs
+            log.info("[Share stats] Accepted:%s%% Rejected:%s%%" %(self.accepted_ratio*100,self.rejected_ratio*100))
+
+            # Reseting counters
+            if total_jobs >= 65535:
+                self.accepted_jobs = 0
+                self.rejected_jobs = 0
+                log.info("[Job stats] Reseting statistics")
 
     def set_module(self,module):
         try:
@@ -22,7 +40,7 @@ class ShareStats(object):
           log.error('Cannot load sharenotify snippet')
           def do_nothing(job_id, worker_name, init_time, dif): pass
           self.on_share = do_nothing
- 
+
     def reset_jobs(self):
         self.shares = {}
 
@@ -45,7 +63,7 @@ class ShareStats(object):
         except:
             pass
             return False
-        
+
     def list_jobs(self):
         return self.shares.keys()
 
@@ -58,16 +76,16 @@ class ShareStats(object):
             if self.shares.keys[job][0] == worker_name:
                 jobs.append(self.shares.keys[job][0])
         return jobs
-    
+
     def clean_jobs(self):
         current_time = time.time()
         for job in self.shares.keys():
             if current_time - self.shares.keys()[job][1] > max_job_time:
                 del self.shares[job]
-            
+
     def __str__(self):
         return self.shares.__str__()
-    
+
     def _execute_snippet(self, job_id, worker_name, init_time, dif):
         self.on_share(job_id, worker_name, init_time, dif)
 

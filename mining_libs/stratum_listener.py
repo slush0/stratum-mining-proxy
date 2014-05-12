@@ -97,7 +97,7 @@ class StratumProxyService(GenericService):
     tail_iterator = 0
     registered_tails= []
     use_sharestats = False
-    
+
     @classmethod
     def _set_upstream_factory(cls, f):
         cls._f = f
@@ -203,20 +203,23 @@ class StratumProxyService(GenericService):
             worker_name = self.custom_user
 
         start = time.time()
-        
+        sharestats.print_stats()
+
         try:
             result = (yield self._f.rpc('mining.submit', [worker_name, job_id, tail+extranonce2, ntime, nonce]))
         except RemoteServiceException as exc:
             response_time = (time.time() - start) * 1000
             log.info("[%dms] Share from '%s' REJECTED: %s" % (response_time, worker_name, str(exc)))
             if self.use_sharestats: sharestats.del_job(job_id)
+            sharestats.rejected_jobs += 1
             raise SubmitException(*exc.args)
 
         response_time = (time.time() - start) * 1000
         log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, DifficultySubscription.difficulty))
         if self.use_sharestats: sharestats.register_job(job_id,DifficultySubscription.difficulty)
+        sharestats.accepted_jobs += 1
         defer.returnValue(result)
-        
+
     def get_transactions(self, *args):
         log.warn("mining.get_transactions isn't supported by proxy")
         return []
