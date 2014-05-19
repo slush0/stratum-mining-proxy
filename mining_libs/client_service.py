@@ -137,6 +137,21 @@ class ClientMiningService(GenericEventHandler):
             log.info("Server asked us to reconnect to %s:%d" % tuple(new))
             self.controlled_disconnect = True
             self.job_registry.f.reconnect(new[0], new[1], wait)
+
+        elif method == 'mining.set_extranonce':
+            '''Method to set new extranonce'''
+            try:
+                extranonce1 = params[0]
+                extranonce2_size = params[1]
+                log.info("Setting new extranonce: %s/%s" %(extranonce1,extranonce2_size))
+            except:
+                log.error("Wrong extranonce information got from pool, ignoring")
+                return False
+            stratum_listener.StratumProxyService._set_extranonce(extranonce1, int(extranonce2_size))
+            stratum_listener.MiningSubscription.reconnect_all()
+            self.job_registry.set_extranonce(extranonce1, int(extranonce2_size))
+
+            return True
         
         elif method == 'client.add_peers':
             '''New peers which can be used on connection failure'''

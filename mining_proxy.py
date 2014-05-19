@@ -118,6 +118,10 @@ def on_connect(f, workers, job_registry):
     # Subscribe for receiving jobs
     log.info("Subscribing for mining jobs")
     (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))[:3]
+
+    log.info("Enable extranonce subscription method")
+    f.rpc('mining.extranonce.subscribe', [])
+
     job_registry.set_extranonce(extranonce1, extranonce2_size)
     stratum_listener.StratumProxyService._set_extranonce(extranonce1, extranonce2_size)
     
