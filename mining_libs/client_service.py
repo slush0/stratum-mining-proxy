@@ -18,7 +18,12 @@ class ClientMiningService(GenericEventHandler):
     cf_notif = 10
     controlled_disconnect = False
     new_custom_auth = False
-    
+    is_backup_active = False
+
+    @classmethod
+    def set_controlled_disconnect(cls,c):
+        cls.controlled_disconnect = c
+
     @classmethod
     def check_control_file(cls):
         # Contorl file syntax is: <pool:port> [user:pass]
@@ -50,7 +55,7 @@ class ClientMiningService(GenericEventHandler):
                     new[1] = port
                     log.info("Found new pool configuration on host control file, reconnecting to %s:%d" % tuple(new))
                     log.info("New custom authorization data found %s:%s" %cls.new_custom_auth)
-                    cls.controlled_disconnect = True
+                    cls.set_controlled_disconnect(True)
                     cls.job_registry.f.reconnect(new[0], new[1], None)
 
             except:
@@ -60,11 +65,11 @@ class ClientMiningService(GenericEventHandler):
 
     @classmethod
     def reset_timeout(cls):
+        cls.check_control_file()
         if cls.timeout != None:
             if not cls.timeout.called:
                 cls.timeout.cancel()
             cls.timeout = None
-        cls.check_control_file()
         cls.timeout = reactor.callLater(2*60, cls.on_timeout)
 
     @classmethod
@@ -114,8 +119,6 @@ class ClientMiningService(GenericEventHandler):
 
             self.job_registry.add_template(job, clean_jobs)
             
-            
-            
         elif method == 'mining.set_difficulty':
             difficulty = params[0]
             log.info("Setting new difficulty: %s" % difficulty)
@@ -127,15 +130,15 @@ class ClientMiningService(GenericEventHandler):
             try:
                 (hostname, port, wait) = params[:3]
             except:
-                log.error("Pool send client.reconnect, but params are not correct, skipping it...")
+                log.error("Pool sent client.reconnect")
                 hostname = False
                 port = False
                 wait = False
             new = list(self.job_registry.f.main_host[::])
             if hostname and len(hostname) > 6: new[0] = hostname
             if port and port > 2: new[1] = port
-            log.info("Server asked us to reconnect to %s:%d" % tuple(new))
-            self.controlled_disconnect = True
+            log.info("Reconnecting to %s:%d" % tuple(new))
+            self.set_controlled_disconnect(True)
             self.job_registry.f.reconnect(new[0], new[1], wait)
 
         elif method == 'mining.set_extranonce':

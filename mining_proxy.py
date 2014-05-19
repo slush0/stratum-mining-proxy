@@ -44,7 +44,6 @@ def parse_args():
     parser.add_argument('--blocknotify', dest='blocknotify_cmd', type=str, default='', help='Execute command when the best block changes (%%s in BLOCKNOTIFY_CMD is replaced by block hash)')
     parser.add_argument('--sharenotify', dest='sharestats_module', type=str, default=None, help='Execute a python snippet when a share is accepted. Use absolute path (i.e /root/snippets/log.py)')
     parser.add_argument('--socks', dest='proxy', type=str, default='', help='Use socks5 proxy for upstream Stratum connection, specify as host:port')
-    parser.add_argument('--tor', dest='tor', action='store_true', help='Configure proxy to mine over Tor (requires Tor running on local machine)')
     parser.add_argument('-t', '--test', dest='test', action='store_true', help='Run performance test on startup')    
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable low-level debugging messages')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_true', help='Make output more quiet')
@@ -134,7 +133,10 @@ def on_connect(f, workers, job_registry):
         log.warning("Authorizing custom user %s, password %s" % (user, password))
         workers.authorize(user, password)
         stratum_listener.StratumProxyService._set_custom_user(user, password)
-    
+
+    # Set controlled disconnect to False
+    f.event_handler.controlled_disconnect = False
+
     defer.returnValue(f)
 
 def on_disconnect(f, workers, job_registry):
@@ -153,19 +155,23 @@ def on_disconnect(f, workers, job_registry):
         reactor_listen.stopListening()
         IDLE=True
 
-    if not f.event_handler.controlled_disconnect and backup_pool:
+    if (not f.event_handler.controlled_disconnect) and backup_pool:
         host = backup_pool.split(':')[0]
         port = int(backup_pool.split(':')[1])
         log.info("Backup pool configured, trying to stablish connection with %s" %backup_pool)
+        stratum_listener.MiningSubscription.reconnect_all()
         f.reconnect(host=host,port=port)
+        workers.clear_authorizations()
+        log.info("Sending reconnect order to workers")
         aux_pool = backup_pool
         backup_pool = original_pool
         original_pool = aux_pool
+        f.event_handler.is_backup_active = not f.event_handler.is_backup_active
 
     if f.event_handler.controlled_disconnect:
         log.info("Sending reconnect order to workers")
         stratum_listener.MiningSubscription.reconnect_all()
-        f.event_handler.controlled_disconnect = False
+        workers.clear_authorizations()
 
     return f
 
@@ -237,15 +243,7 @@ def main(args):
             args.port = new_host[1]
 
     log.warning("Stratum proxy version: %s" % version.VERSION)
-    # Setup periodic checks for a new version
-    test_update()
     
-    if args.tor:
-        log.warning("Configuring Tor connection")
-        args.proxy = '127.0.0.1:9050'
-        args.host = 'pool57wkuu5yuhzb.onion'
-        args.port = 3333
-        
     if args.proxy:
         proxy = args.proxy.split(':')
         if len(proxy) < 2:
