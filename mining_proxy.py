@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument('-cs', '--custom-stratum', dest='custom_stratum', type=str, help='Override URL provided in X-Stratum header')
     parser.add_argument('-cu', '--custom-user', dest='custom_user', type=str, help='Use this username for submitting shares')
     parser.add_argument('-cp', '--custom-password', dest='custom_password', type=str, help='Use this password for submitting shares')
+    parser.add_argument('--set-extranonce', dest='set_extranonce', action='store_true', help='Enable set extranonce method from stratum pool')
     parser.add_argument('-cf', '--control-file', dest='cf_path', type=str, default=None, help='Control file path. If set proxy will check periodically for the contents of this file, if a new destination pool is specified in format pool:port, proxy will switch to this new pool.')
     parser.add_argument('--cf-interval', dest='cf_notif', type=int, default=10, help='Control file check interval (in pool notifications number). Low one implies more filesystem I/O and delays.')
     parser.add_argument('--idle', dest='set_idle', action='store_true', help='Close listening stratum ports in case connection with pool is lost (recover it later if success)')
@@ -118,8 +119,9 @@ def on_connect(f, workers, job_registry):
     log.info("Subscribing for mining jobs")
     (_, extranonce1, extranonce2_size) = (yield f.rpc('mining.subscribe', []))[:3]
 
-    log.info("Enable extranonce subscription method")
-    f.rpc('mining.extranonce.subscribe', [])
+    if args.set_extranonce:
+        log.info("Enable extranonce subscription method")
+        f.rpc('mining.extranonce.subscribe', [])
 
     job_registry.set_extranonce(extranonce1, extranonce2_size)
     stratum_listener.StratumProxyService._set_extranonce(extranonce1, extranonce2_size)
