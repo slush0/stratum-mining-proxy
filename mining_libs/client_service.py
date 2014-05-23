@@ -82,7 +82,10 @@ class ClientMiningService(GenericEventHandler):
         log.error("Connection to upstream pool timed out")
         cls.reset_timeout()
         cls.job_registry.f.reconnect()
-                
+        cls.set_controlled_disconnect(False)
+        pool = list(cls.job_registry.f.main_host[::])
+        cls.job_registry.f.reconnect(pool[0], pool[1], None)
+
     def handle_event(self, method, params, connection_ref):
         '''Handle RPC calls and notifications from the pool'''
 
