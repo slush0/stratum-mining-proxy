@@ -16,6 +16,8 @@ class ClientMiningService(GenericEventHandler):
     cf_counter = 0
     cf_path = None
     cf_notif = 10
+    backup_active_interval_max = 100
+    backup_active_interval = backup_active_interval_max
     controlled_disconnect = False
     new_custom_auth = False
     is_backup_active = False
@@ -28,7 +30,21 @@ class ClientMiningService(GenericEventHandler):
     def check_control_file(cls):
         # Contorl file syntax is: <pool:port> [user:pass]
         # Example: mypool.com:3333 user.1:foo
-        if cls.cf_path != None and cls.cf_counter > cls.cf_notif:
+
+        # If backup is active, wait for backup_active_interval_max to try again with original pool
+        if cls.is_backup_active:
+            cls.backup_active_interval -= 1
+            if cls.backup_active_interval < 1:
+                log.info("Backup pool is active, trying to connect back with the original pool")
+                cls.backup_active_interval = cls.backup_active_interval_max
+                cls.is_backup_active = False
+                # if cf_path is not enabled, sending reconnect. Pool host change is handled by the disconnect event
+                if cls.cf_path == None:
+                    cls.set_controlled_disconnect(False)
+                    hostport = list(cls.job_registry.f.main_host[::])
+                    cls.job_registry.f.reconnect(hostport[0], hostport[1], None)
+
+        if cls.cf_path != None and cls.cf_counter > cls.cf_notif and (not cls.is_backup_active):
             cls.cf_counter = 0
             log.info("Checking control file")
             try:

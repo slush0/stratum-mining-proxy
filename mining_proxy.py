@@ -273,6 +273,9 @@ def main(args):
     client_service.ClientMiningService.cf_path = args.cf_path
     client_service.ClientMiningService.cf_notif = args.cf_notif
 
+    if args.custom_user != None:
+        client_service.ClientMiningService.new_custom_auth = (args.custom_user, args.custom_password)
+
     workers = worker_registry.WorkerRegistry(f)
     f.on_connect.addCallback(on_connect, workers, job_registry)
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)

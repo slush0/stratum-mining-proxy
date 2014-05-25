@@ -198,7 +198,7 @@ class StratumProxyService(GenericService):
         if self.use_sharestats:
             sharestats.add_job(job_id,worker_name)
             
-        if self.custom_user:
+        if self.custom_user != None:
             worker_name = self.custom_user
 
         start = time.time()
