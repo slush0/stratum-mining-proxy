@@ -18,12 +18,14 @@
 '''
 
 import argparse
+import setproctitle
 import time
 import os
 import socket
 
 def parse_args():
     parser = argparse.ArgumentParser(description='This proxy allows you to run getwork-based miners against Stratum mining pool.')
+    parser.add_argument('-n', '--name', dest='name', type=str, default='stratum-mining-proxy', help='Process name')
     parser.add_argument('-o', '--host', dest='host', type=str, default='stratum.bitcoin.cz', help='Hostname of Stratum mining pool')
     parser.add_argument('-p', '--port', dest='port', type=int, default=3333, help='Port of Stratum mining pool')
     parser.add_argument('-sh', '--stratum-host', dest='stratum_host', type=str, default='0.0.0.0', help='On which network interface listen for stratum miners. Use "localhost" for listening on internal IP only.')
@@ -55,6 +57,7 @@ if __name__ == '__main__':
     # We need to parse args & setup Stratum environment
     # before any other imports
     args = parse_args()
+    setproctitle.setproctitle('smp-%s' % args.name)
     if args.quiet:
         settings.DEBUG = False
         settings.LOGLEVEL = 'WARNING'
@@ -91,6 +94,7 @@ def on_connect(f, workers, job_registry):
     '''Callback when proxy get connected to the pool'''
     log.info("Connected to Stratum pool at %s:%d" % f.main_host)
     #reactor.callLater(30, f.client.transport.loseConnection)
+    client_service.ClientMiningService.reset_timeout(True)
     
     # Hook to on_connect again
     f.on_connect.addCallback(on_connect, workers, job_registry)
@@ -113,14 +117,14 @@ def on_connect(f, workers, job_registry):
 def on_disconnect(f, workers, job_registry):
     '''Callback when proxy get disconnected from the pool'''
     log.info("Disconnected from Stratum pool at %s:%d" % f.main_host)
+    # os.system('kill %d' % os.getpid())
     f.on_disconnect.addCallback(on_disconnect, workers, job_registry)
     
     stratum_listener.MiningSubscription.disconnect_all()
     
     # Reject miners because we don't give a *job :-)
     workers.clear_authorizations() 
-    
-    return f              
+    return f
 
 def test_launcher(result, job_registry):
     def run_test():
@@ -268,5 +272,9 @@ def main(args):
     log.warning("-----------------------------------------------------------------------")
 
 if __name__ == '__main__':
+    # log.error('kill %d' % os.getpid())
     main(args)
-    reactor.run()
+    try:
+      reactor.run()
+    except Exception:
+      sys.exit()

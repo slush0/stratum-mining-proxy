@@ -23,9 +23,9 @@ args = {
         'midstate', 
         ['midstatec/midstatemodule.c'],
         include_dirs=['/usr/include/python2.7'],
-        extra_compile_args=['-march=native', '-Wall', '-funroll-all-loops', '-O3', '-fstrict-aliasing', '-Wall', '-std=c99',  '-fPIC', '-shared'],
+        extra_compile_args=['-D_FORTIFY_SOURCE=2', '-march=native', '-Wall', '-funroll-all-loops', '-O3', '-fstrict-aliasing', '-std=c99',  '-fPIC', '-shared', '-fstack-protector', '--param=ssp-buffer-size=4', '-Wformat', '-Werror=format-security'],
         libraries=['python2.7'],
-        extra_link_args=['-Wl,-O1', '-Wl,--as-needed']
+        extra_link_args=['-Wl,-O1', '-Wl,--as-needed', '-Wl,-z,relro']
         )
       ],
     'py_modules': ['mining_libs.client_service', 'mining_libs.getwork_listener',
@@ -33,7 +33,7 @@ args = {
                    'mining_libs.multicast_responder', 'mining_libs.stratum_listener',
                    'mining_libs.utils', 'mining_libs.version', 'mining_libs.worker_registry',
                    'midstatec.midstatec'],
-    'install_requires': ['setuptools>=0.6c11', 'twisted>=12.2.0', 'stratum>=0.2.15', 'argparse'],
+    'install_requires': ['setuptools>=0.6c11', 'twisted>=12.2.0', 'stratum>=0.2.15', 'argparse', 'setproctitle'],
     'scripts': ['mining_proxy.py'],
 }
 

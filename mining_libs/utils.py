@@ -7,6 +7,9 @@ from twisted.web import client
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
 
+def StratumConnectionException(Exception):
+    pass
+
 def show_message(msg):
     '''Repeatedly displays the message received from
     the server.'''

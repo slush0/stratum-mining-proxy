@@ -15,18 +15,25 @@ log = stratum.logger.get_logger('proxy')
 from midstate import calculateMidstate as __unusedimport
 
 try:
-    from midstatec import test as midstateTest, midstate as calculateMidstate
-    if not midstateTest():
-        log.warning("midstate library didn't passed self test!")
-        raise ImportError("midstatec not usable")
-    log.info("Using C extension for midstate speedup. Good!")
+  from midstatec import test as midstateTest, midstate as calculateMidstate
+  if not midstateTest():
+    log.warning("midstate library didn't pass self test!")
+    raise ImportError("midstatec not usable")
+  log.info("Using C extension for midstate speedup. Good!")
 except ImportError:
+  try:
+    from midstatec.midstatec import test as midstateTest, midstate as calculateMidstate
+    if not midstateTest():
+      log.warning("midstate library didn't pass self test!")
+      raise ImportError("midstatec not usable")
+    log.info("Using C extension for midstate speedup. Good!")
+  except ImportError:
     log.info("C extension for midstate not available. Using default implementation instead.")
     try:    
-        from midstate import calculateMidstate
+      from midstate import calculateMidstate
     except ImportError:
-        calculateMidstate = None
-        log.exception("No midstate generator available. Some old miners won't work properly.")
+      calculateMidstate = None
+      log.exception("No midstate generator available. Some old miners won't work properly.")
 
 class Job(object):
     def __init__(self):

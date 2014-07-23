@@ -1,3 +1,10 @@
+stratum-mining-proxy (1.5.9-2) unstable; urgency=low
+
+  * Add process name.
+  * Exit after n unsuccessful connection attempts.
+
+ -- Jacek Krysztofik <jacek.krysztofik@infinite.pl>  Sat, 14 Jun 2014 13:37:11 +0200
+
 stratum-mining-proxy (1.5.7-1) unstable; urgency=low
 
   * Make midstatec module installable in debian.
