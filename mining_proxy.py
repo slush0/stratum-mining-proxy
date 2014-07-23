@@ -26,6 +26,7 @@ import socket
 def parse_args():
     parser = argparse.ArgumentParser(description='This proxy allows you to run getwork-based miners against Stratum mining pool.')
     parser.add_argument('-n', '--name', dest='name', type=str, default='stratum-mining-proxy', help='Process name')
+    parser.add_argument('-rxn2', '--randomize-extranonce2', dest='rxn2', action='store_true', help='Whether to randomize extranonce2')
     parser.add_argument('-o', '--host', dest='host', type=str, default='stratum.bitcoin.cz', help='Hostname of Stratum mining pool')
     parser.add_argument('-p', '--port', dest='port', type=int, default=3333, help='Port of Stratum mining pool')
     parser.add_argument('-sh', '--stratum-host', dest='stratum_host', type=str, default='0.0.0.0', help='On which network interface listen for stratum miners. Use "localhost" for listening on internal IP only.')
@@ -222,6 +223,7 @@ def main(args):
     
     job_registry = jobs.JobRegistry(f, cmd=args.blocknotify_cmd, scrypt_target=args.scrypt_target,
                    no_midstate=args.no_midstate, real_target=args.real_target, use_old_target=args.old_target)
+    job_registry.randomize_extranonce2 = args.rxn2
     client_service.ClientMiningService.job_registry = job_registry
     client_service.ClientMiningService.reset_timeout()
     

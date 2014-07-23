@@ -1,3 +1,9 @@
+stratum-mining-proxy (1.5.10-1) unstable; urgency=low
+
+  * Add option for extranonce2 randomization.
+
+ -- Jacek Krysztofik <jacek.krysztofik@infinite.pl>  Wed, 23 Jul 2014 13:37:11 +0200
+
 stratum-mining-proxy (1.5.9-2) unstable; urgency=low
 
   * Add process name.
