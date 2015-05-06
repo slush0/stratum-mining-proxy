@@ -48,7 +48,21 @@ def detect_stratum(host, port):
     when client uses unknown payload.'''
         
     def get_raw_page(url, *args, **kwargs):
-        scheme, host, port, path = client._parse(url)
+        # In Twisted 13.1.0 _parse() function replaced by _URI class.
+        # In Twisted 15.0.0 _URI class renamed to URI.
+        if hasattr(client, "_parse"):
+            scheme, host, port, path = client._parse(url)
+        else:
+            try:
+                from twisted.web.client import _URI as URI
+            except ImportError:
+                from twisted.web.client import URI
+
+            uri = URI.fromBytes(url)
+            scheme = uri.scheme
+            host = uri.host
+            port = uri.port
+
         factory = client.HTTPClientFactory(url, *args, **kwargs)
         reactor.connectTCP(host, port, factory)
         return factory
