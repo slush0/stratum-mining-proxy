@@ -1,0 +1,8 @@
+*.pyc
+build
+distribute*
+*egg-info*
+debian/files
+debian/*/
+debian/*.debhelper*
+debian/*.substvars

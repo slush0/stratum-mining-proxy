@@ -15,7 +15,7 @@ log = stratum.logger.get_logger('proxy')
 from midstate import calculateMidstate as __unusedimport
 
 try:
-    from midstatec.midstatec import test as midstateTest, midstate as calculateMidstate
+    from midstatec import test as midstateTest, midstate as calculateMidstate
     if not midstateTest():
         log.warning("midstate library didn't passed self test!")
         raise ImportError("midstatec not usable")

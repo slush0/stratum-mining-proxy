@@ -11,8 +11,8 @@ Installation on Windows
 2. Open downloaded file. It will open console window. Using default settings, proxy connects to Slush's pool interface
 3. If you want to connect to another pool or change other proxy settings, type "mining_proxy.exe --help" in console window.
 
-Installation on Linux
----------------------
+Installation on Linux - local hierarchy
+---------------------------------------
 
 1. Download TGZ file from https://github.com/slush0/stratum-mining-proxy/tarball/master
 2. Unpack it by typing "tar xf slush0-stratum-mining_proxy*.tar.gz"
@@ -22,6 +22,15 @@ Installation on Linux
 4. You can start the proxy by typing "./mining_proxy.py" in the terminal window. Using default settings,
 proxy connects to Slush's pool interface.
 5. If you want to connect to another pool or change other proxy settings, type "mining_proxy.py --help".
+
+Packaging for Debian
+--------------------
+
+1. Install devscripts, debhelper, pbuilder.
+2. Download and unpack a tarball or clone this repository. Enter the unpacked/cloned direcotry.
+3. Type "debuild-pbuilder -b -uc -us". You will be asked your password for sudo command. If you're a sudoer, skip to the last step.
+4. If you're not a sudoer, an error will occur. Do `apt-get -f install' as root to correct the situation and call "debuild -b -uc -us".
+5. A .deb package will be generated in parent directory. Use it to install stratum-mining-proxy on a Debian compatible system.
 
 Installation on Mac
 -------------------
