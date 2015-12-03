@@ -1,14 +1,13 @@
 stratum-mining-proxy
 ====================
 
-Application providing bridge between old HTTP/getwork protocol and Stratum mining protocol
-as described here: http://mining.bitcoin.cz/stratum-mining.
+Application providing proxy between Stratum miners and pools, improving network footprint and DDoS resistance.
 
 Installation on Windows
 -----------------------
 
 1. Download official Windows binaries (EXE) from https://mining.bitcoin.cz/media/download/mining_proxy.exe
-2. Open downloaded file. It will open console window. Using default settings, proxy connects to Slush's pool interface
+2. Open downloaded file. It will open console window. Using default settings, proxy connects to Slush Pool interface
 3. If you want to connect to another pool or change other proxy settings, type "mining_proxy.exe --help" in console window.
 
 Installation on Linux - local hierarchy
@@ -60,18 +59,10 @@ proxy connects to Slush's pool interface.
 7. If you want to connect to another pool or change other proxy settings, type "./mining_proxy.py --help".
 8. If you want to update the proxy, type "git pull" in the package directory.
 
-Compiling midstate C extension
-------------------------------
-For some really big operations using getwork interface of this proxy, you'll find
-useful "midstatec" C extension, which significantly speeds up midstate calculations
-(yes, plain python implementation is *so* slow). For enabling this extension,
-just type "make" in midstatec directory. Proxy will auto-detect compiled extension
-on next startup.
-
 Contact
 -------
 
-This proxy is provided by Slush's mining pool at http://mining.bitcoin.cz. You can contact the author
+This proxy is provided by Slush Pool at https://mining.bitcoin.cz. You can contact the author
 by email slush(at)satoshilabs.com.
 
 Donation
