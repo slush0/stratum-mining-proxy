@@ -69,9 +69,7 @@ class ClientMiningService(GenericEventHandler):
                  (job.job_id, utils.format_hash(job.prevhash), clean_jobs))
 
             self.job_registry.add_template(job, clean_jobs)
-            
-            
-            
+
         elif method == 'mining.set_difficulty':
             difficulty = params[0]
             log.info("Setting new difficulty: %s" % difficulty)
@@ -87,16 +85,7 @@ class ClientMiningService(GenericEventHandler):
 
             log.info("Server asked us to reconnect to %s:%d" % tuple(new))
             self.job_registry.f.reconnect(new[0], new[1], wait)
-            
-        elif method == 'client.add_peers':
-            '''New peers which can be used on connection failure'''
-            return False
-            '''
-            peerlist = params[0] # TODO
-            for peer in peerlist:
-                self.job_registry.f.add_peer(peer)
-            return True
-            '''
+
         elif method == 'client.get_version':
             return "stratum-proxy/%s" % _version.VERSION
 
@@ -105,12 +94,6 @@ class ClientMiningService(GenericEventHandler):
             # Displays message from the server to the terminal
             utils.show_message(params[0])
             return True
-            
-        elif method == 'mining.get_hashrate':
-            return {} # TODO
-        
-        elif method == 'mining.get_temperature':
-            return {} # TODO
         
         else:
             '''Pool just asked us for something which we don't support...'''
