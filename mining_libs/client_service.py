@@ -2,6 +2,8 @@ from twisted.internet import reactor
 
 from stratum.event_handler import GenericEventHandler
 from jobs import Job
+import os
+import sys
 import utils
 import version as _version
 
@@ -13,15 +15,21 @@ log = stratum.logger.get_logger('proxy')
 class ClientMiningService(GenericEventHandler):
     job_registry = None # Reference to JobRegistry instance
     timeout = None # Reference to IReactorTime object
+    tomax = 4
+    tocount = 4
     
     @classmethod
-    def reset_timeout(cls):
+    def reset_timeout(cls, reset=False):
         if cls.timeout != None:
             if not cls.timeout.called:
                 cls.timeout.cancel()
             cls.timeout = None
-            
-        cls.timeout = reactor.callLater(2*60, cls.on_timeout)
+
+        if reset:
+            if cls.tocount < cls.tomax:
+                log.info("Resetting timeout counter to %d." % cls.tomax)
+            cls.tocount = cls.tomax
+        cls.timeout = reactor.callLater(30, cls.on_timeout)
 
     @classmethod
     def on_timeout(cls):
@@ -30,16 +38,25 @@ class ClientMiningService(GenericEventHandler):
             It will also drop all Stratum connections to sub-miners
             to indicate connection issues.
         '''
-        log.error("Connection to upstream pool timed out")
-        cls.reset_timeout()
-        cls.job_registry.f.reconnect()
-                
+        if cls.tocount == 0:
+            log.error("Connection to upstream pool timed out too many times. Goodbye, world!.")
+            os.system('kill %d' % os.getpid())
+            log.info('kill %d' % os.getpid())
+
+        if not cls.job_registry.f.client.connected:
+            cls.tocount -= 1
+            log.warning("Connection to upstream pool timed out - %d left." % cls.tocount)
+            cls.job_registry.f.reconnect()
+
+        cls.reset_timeout(cls.job_registry.f.client.connected)
+
     def handle_event(self, method, params, connection_ref):
         '''Handle RPC calls and notifications from the pool'''
 
         # Yay, we received something from the pool,
         # let's restart the timeout.
-        self.reset_timeout()
+        self.reset_timeout(True)
+        self.tocount = self.tomax
         
         if method == 'mining.notify':
             '''Proxy just received information about new mining job'''

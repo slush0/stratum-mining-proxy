@@ -1,3 +1,4 @@
+import random
 import binascii
 import time
 import struct
@@ -15,18 +16,25 @@ log = stratum.logger.get_logger('proxy')
 from midstate import calculateMidstate as __unusedimport
 
 try:
-    from midstatec import test as midstateTest, midstate as calculateMidstate
-    if not midstateTest():
-        log.warning("midstate library didn't passed self test!")
-        raise ImportError("midstatec not usable")
-    log.info("Using C extension for midstate speedup. Good!")
+  from midstatec import test as midstateTest, midstate as calculateMidstate
+  if not midstateTest():
+    log.warning("midstate library didn't pass self test!")
+    raise ImportError("midstatec not usable")
+  log.info("Using C extension for midstate speedup. Good!")
 except ImportError:
+  try:
+    from midstatec.midstatec import test as midstateTest, midstate as calculateMidstate
+    if not midstateTest():
+      log.warning("midstate library didn't pass self test!")
+      raise ImportError("midstatec not usable")
+    log.info("Using C extension for midstate speedup. Good!")
+  except ImportError:
     log.info("C extension for midstate not available. Using default implementation instead.")
     try:    
-        from midstate import calculateMidstate
+      from midstate import calculateMidstate
     except ImportError:
-        calculateMidstate = None
-        log.exception("No midstate generator available. Some old miners won't work properly.")
+      calculateMidstate = None
+      log.exception("No midstate generator available. Some old miners won't work properly.")
 
 class Job(object):
     def __init__(self):
@@ -54,10 +62,14 @@ class Job(object):
         job.version = version
         job.nbits = nbits
         job.ntime_delta = int(ntime, 16) - int(time.time()) 
+        random.seed(job.prevhash)
         return job
 
-    def increase_extranonce2(self):
-        self.extranonce2 += 1
+    def increase_extranonce2(self, randomize = False):
+        if randomize:
+            self.extranonce2 = random.randint(0, 1 << 32)
+        else:
+            self.extranonce2 += 1
         return self.extranonce2
 
     def build_coinbase(self, extranonce):
@@ -98,6 +110,7 @@ class JobRegistry(object):
         self.difficulty = 1
         self.set_difficulty(1)
         self.target1_hex = self.target_hex
+        self.randomize_xn2 = False
         
         # Relation between merkle and job
         self.merkle_to_job= weakref.WeakValueDictionary()
@@ -182,10 +195,12 @@ class JobRegistry(object):
         job = self.last_job # Pick the latest job from pool
 
         # 1. Increase extranonce2
-        extranonce2 = job.increase_extranonce2()
+        extranonce2 = job.increase_extranonce2(self.randomize_xn2)
         
         # 2. Build final extranonce
         extranonce = self.build_full_extranonce(extranonce2)
+
+        log.debug('XN = %s' % (binascii.hexlify(extranonce)))
         
         # 3. Put coinbase transaction together
         coinbase_bin = job.build_coinbase(extranonce)
