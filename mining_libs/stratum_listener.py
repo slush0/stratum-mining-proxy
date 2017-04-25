@@ -10,6 +10,9 @@ from stratum.custom_exceptions import ServiceException, RemoteServiceException
 
 from jobs import JobRegistry
 
+from share_stats import ShareStats
+sharestats = ShareStats()
+
 import stratum.logger
 log = stratum.logger.get_logger('proxy')
 
@@ -51,7 +54,13 @@ class MiningSubscription(Subscription):
         for subs in Pubsub.iterate_subscribers(cls.event):
             if subs.connection_ref().transport != None:
                 subs.connection_ref().transport.loseConnection()
-        
+
+    @classmethod
+    def reconnect_all(cls):
+        for subs in Pubsub.iterate_subscribers(cls.event):
+            if subs.connection_ref().transport != None:
+                subs.connection_ref().transport.loseConnection()
+
     @classmethod
     def on_template(cls, job_id, prevhash, coinb1, coinb2, merkle_branch, version, nbits, ntime, clean_jobs):
         '''Push new job to subscribed clients'''
@@ -87,7 +96,8 @@ class StratumProxyService(GenericService):
     extranonce2_size = None
     tail_iterator = 0
     registered_tails= []
-    
+    use_sharestats = False
+
     @classmethod
     def _set_upstream_factory(cls, f):
         cls._f = f
@@ -96,7 +106,13 @@ class StratumProxyService(GenericService):
     def _set_custom_user(cls, custom_user, custom_password):
         cls.custom_user = custom_user
         cls.custom_password = custom_password
-        
+    
+    @classmethod
+    def _set_sharestats_module(cls, module):
+        if module != None and len(module) > 1:
+            cls.use_sharestats = True
+            sharestats.set_module(module)
+    
     @classmethod
     def _set_extranonce(cls, extranonce1, extranonce2_size):
         cls.extranonce1 = extranonce1
@@ -141,10 +157,9 @@ class StratumProxyService(GenericService):
         if self.custom_user != None:
             # Already subscribed by main()
             defer.returnValue(True)
-                        
         result = (yield self._f.rpc('mining.authorize', [worker_name, worker_password]))
         defer.returnValue(result)
-    
+
     @defer.inlineCallbacks
     def subscribe(self, *args):    
         if self._f.client == None or not self._f.client.connected:
@@ -179,21 +194,29 @@ class StratumProxyService(GenericService):
         tail = session.get('tail')
         if tail == None:
             raise SubmitException("Connection is not subscribed")
-
-        if self.custom_user:
+        
+        if self.use_sharestats:
+            sharestats.add_job(job_id,worker_name)
+            
+        if self.custom_user != None:
             worker_name = self.custom_user
 
         start = time.time()
-        
+        sharestats.print_stats()
+
         try:
             result = (yield self._f.rpc('mining.submit', [worker_name, job_id, tail+extranonce2, ntime, nonce]))
         except RemoteServiceException as exc:
             response_time = (time.time() - start) * 1000
             log.info("[%dms] Share from '%s' REJECTED: %s" % (response_time, worker_name, str(exc)))
+            if self.use_sharestats: sharestats.del_job(job_id)
+            sharestats.rejected_jobs += 1
             raise SubmitException(*exc.args)
 
         response_time = (time.time() - start) * 1000
         log.info("[%dms] Share from '%s' accepted, diff %d" % (response_time, worker_name, DifficultySubscription.difficulty))
+        if self.use_sharestats: sharestats.register_job(job_id,DifficultySubscription.difficulty)
+        sharestats.accepted_jobs += 1
         defer.returnValue(result)
 
     def get_transactions(self, *args):
