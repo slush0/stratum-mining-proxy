@@ -119,7 +119,7 @@ class Root(Resource):
         else:
             request.setHeader('x-long-polling', '/lp')
             
-        request.setHeader('x-roll-ntime', 1)
+        request.setHeader('x-roll-ntime', "1")
         
     def _on_lp_broadcast(self, _, request):        
         try:
